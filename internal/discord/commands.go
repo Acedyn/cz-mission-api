@@ -7,24 +7,25 @@ import (
 )
 
 func getMissionChoices() []*discordgo.ApplicationCommandOptionChoice {
-	var missionKeys = make([]*discordgo.ApplicationCommandOptionChoice, len(missions.Missions))
-	for key := range missions.Missions {
-		missionKeys = append(missionKeys, &discordgo.ApplicationCommandOptionChoice{
-			Name:  strings.Title(strings.Replace(key, "-", " ", -1)),
-			Value: key,
+	missionClassKeys := missions.GetMissionClassKeys()
+	missionChoices := make([]*discordgo.ApplicationCommandOptionChoice, 0)
+	for _, classKey := range missionClassKeys {
+		missionChoices = append(missionChoices, &discordgo.ApplicationCommandOptionChoice{
+			Name:  strings.Title(strings.Replace(classKey, "-", " ", -1)),
+			Value: classKey,
 		})
 	}
-	return missionKeys
+	return missionChoices
 }
 
 type DiscordCommand struct {
-	Data    discordgo.ApplicationCommand
+	Data    *discordgo.ApplicationCommand
 	Handler func(*discordgo.Session, *discordgo.InteractionCreate)
 }
 
 var Commands = []*DiscordCommand{
 	{
-		Data: discordgo.ApplicationCommand{
+		Data: &discordgo.ApplicationCommand{
 			Name:        "test-command",
 			Description: "Command for testing purpose",
 		},
@@ -38,7 +39,7 @@ var Commands = []*DiscordCommand{
 		},
 	},
 	{
-		Data: discordgo.ApplicationCommand{
+		Data: &discordgo.ApplicationCommand{
 			Name:        "create-mission",
 			Description: "Create a mission",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -50,13 +51,14 @@ var Commands = []*DiscordCommand{
 				},
 				{
 					Name:        "description",
-					Description: "Description of the mission",
+					Description: "Short description of the mission (255 characters)",
 					Type:        discordgo.ApplicationCommandOptionString,
 					Required:    true,
 				},
 				{
-					Name:        "type",
-					Description: "Type of mission",
+					Name:        "class",
+					Description: "Mission class that will define the rules of completion",
+					Type:        discordgo.ApplicationCommandOptionString,
 					Choices:     getMissionChoices(),
 					Required:    true,
 				},
@@ -79,7 +81,7 @@ var Commands = []*DiscordCommand{
 		},
 	},
 	{
-		Data: discordgo.ApplicationCommand{
+		Data: &discordgo.ApplicationCommand{
 			Name:        "update-mission",
 			Description: "Update a mission",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -102,6 +104,7 @@ var Commands = []*DiscordCommand{
 				{
 					Name:        "type",
 					Description: "Type of mission",
+					Type:        discordgo.ApplicationCommandOptionString,
 					Choices:     getMissionChoices(),
 				},
 				{
@@ -122,7 +125,7 @@ var Commands = []*DiscordCommand{
 		},
 	},
 	{
-		Data: discordgo.ApplicationCommand{
+		Data: &discordgo.ApplicationCommand{
 			Name:        "cancel-mission",
 			Description: "Cancel a mission",
 			Options: []*discordgo.ApplicationCommandOption{
