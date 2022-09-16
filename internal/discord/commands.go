@@ -1,8 +1,12 @@
 package discord
 
 import (
+	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/cardboard-citizens/cz-goodboard-api/internal/database"
 	"github.com/cardboard-citizens/cz-goodboard-api/internal/missions"
+	"github.com/cardboard-citizens/cz-goodboard-api/internal/models"
+	"github.com/cardboard-citizens/cz-goodboard-api/internal/utils"
 	"strings"
 )
 
@@ -18,132 +22,197 @@ func getMissionChoices() []*discordgo.ApplicationCommandOptionChoice {
 	return missionChoices
 }
 
+func getInteractionOptions(interaction *discordgo.InteractionCreate) map[string]*discordgo.ApplicationCommandInteractionDataOption {
+	optionList := interaction.ApplicationCommandData().Options
+    optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(optionList))
+	for _, option := range optionList {
+		optionMap[option.Name] = option
+	}
+	return optionMap
+}
+
 type DiscordCommand struct {
 	Data    *discordgo.ApplicationCommand
 	Handler func(*discordgo.Session, *discordgo.InteractionCreate)
 }
 
-var Commands = []*DiscordCommand{
-	{
-		Data: &discordgo.ApplicationCommand{
-			Name:        "test-command",
-			Description: "Command for testing purpose",
-		},
-		Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-			session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Command registered successfully",
-				},
-			})
-		},
-	},
-	{
-		Data: &discordgo.ApplicationCommand{
-			Name:        "create-mission",
-			Description: "Create a mission",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:        "name",
-					Description: "Name of the mission",
-					Type:        discordgo.ApplicationCommandOptionString,
-					Required:    true,
-				},
-				{
-					Name:        "description",
-					Description: "Short description of the mission (255 characters)",
-					Type:        discordgo.ApplicationCommandOptionString,
-					Required:    true,
-				},
-				{
-					Name:        "class",
-					Description: "Mission class that will define the rules of completion",
-					Type:        discordgo.ApplicationCommandOptionString,
-					Choices:     getMissionChoices(),
-					Required:    true,
-				},
-				{
-					Name:        "reward",
-					Description: "Reward of the mission",
-					Type:        discordgo.ApplicationCommandOptionNumber,
-					MinValue:    new(float64),
-					Required:    true,
-				},
+func GetCommands(dbController *database.DatabaseController) (commands []*DiscordCommand) {
+	return []*DiscordCommand{
+		{
+			Data: &discordgo.ApplicationCommand{
+				Name:        "ping-command",
+				Description: "Command for testing purpose",
+			},
+			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+				utils.Log.Info("Ping from discord slash command")
+
+				session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: "Pong, connection with the server successfull",
+					},
+				})
 			},
 		},
-		Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-			session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Mission created successfully",
-				},
-			})
-		},
-	},
-	{
-		Data: &discordgo.ApplicationCommand{
-			Name:        "update-mission",
-			Description: "Update a mission",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:        "id",
-					Description: "ID of the mission",
-					Type:        discordgo.ApplicationCommandOptionString,
-					Required:    true,
-				},
-				{
-					Name:        "name",
-					Description: "Name of the mission",
-					Type:        discordgo.ApplicationCommandOptionString,
-				},
-				{
-					Name:        "description",
-					Description: "Description of the mission",
-					Type:        discordgo.ApplicationCommandOptionString,
-				},
-				{
-					Name:        "type",
-					Description: "Type of mission",
-					Type:        discordgo.ApplicationCommandOptionString,
-					Choices:     getMissionChoices(),
-				},
-				{
-					Name:        "reward",
-					Description: "Reward of the mission",
-					Type:        discordgo.ApplicationCommandOptionNumber,
-					MinValue:    new(float64),
+		{
+			Data: &discordgo.ApplicationCommand{
+				Name:        "create-mission",
+				Description: "Create a mission",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Name:        "name",
+						Description: "Name of the mission",
+						Type:        discordgo.ApplicationCommandOptionString,
+						Required:    true,
+					},
+					{
+						Name:        "short-description",
+						Description: "Short description of the mission",
+						Type:        discordgo.ApplicationCommandOptionString,
+						Required:    true,
+					},
+					{
+						Name:        "long-description",
+						Description: "Long description of the mission",
+						Type:        discordgo.ApplicationCommandOptionString,
+						Required:    true,
+					},
+					{
+						Name:        "class",
+						Description: "The mission class defines the rules to complete the mission",
+						Type:        discordgo.ApplicationCommandOptionString,
+						Choices:     getMissionChoices(),
+						Required:    true,
+					},
+					{
+						Name:        "reward",
+						Description: "Reward of the mission",
+						Type:        discordgo.ApplicationCommandOptionNumber,
+						MinValue:    new(float64),
+						Required:    true,
+					},
 				},
 			},
-		},
-		Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-			session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Mission updated successfully",
-				},
-			})
-		},
-	},
-	{
-		Data: &discordgo.ApplicationCommand{
-			Name:        "cancel-mission",
-			Description: "Cancel a mission",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:        "id",
-					Description: "ID of the mission",
-					Type:        discordgo.ApplicationCommandOptionString,
-					Required:    true,
-				},
+			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+				utils.Log.Debug("Create mission slash command received")
+				options := getInteractionOptions(interaction)
+				err := dbController.CreateMission(&models.Mission{
+					Name:             options["name"].StringValue(),
+					ShortDescription: options["short-description"].StringValue(),
+					LongDescription:  options["long-description"].StringValue(),
+					Class:            options["class"].StringValue(),
+					Reward:           options["reward"].FloatValue(),
+				})
+
+				if err != nil {
+					session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Content: "An error occured while creating the mission",
+						},
+					})
+					return
+				}
+
+				session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: "Mission successfully created",
+					},
+				})
 			},
 		},
-		Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-			session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Mission canceled successfully",
+		{
+			Data: &discordgo.ApplicationCommand{
+				Name:        "update-mission",
+				Description: "Update a mission",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Name:        "id",
+						Description: "ID of the mission",
+						Type:        discordgo.ApplicationCommandOptionString,
+						Required:    true,
+					},
+					{
+						Name:        "name",
+						Description: "Name of the mission",
+						Type:        discordgo.ApplicationCommandOptionString,
+					},
+					{
+						Name:        "short-description",
+						Description: "Short description of the mission",
+						Type:        discordgo.ApplicationCommandOptionString,
+					},
+					{
+						Name:        "long-description",
+						Description: "Long description of the mission",
+						Type:        discordgo.ApplicationCommandOptionString,
+					},
+					{
+						Name:        "class",
+						Description: "The mission class defines the rules to complete the mission",
+						Type:        discordgo.ApplicationCommandOptionString,
+						Choices:     getMissionChoices(),
+					},
+					{
+						Name:        "reward",
+						Description: "Reward of the mission",
+						Type:        discordgo.ApplicationCommandOptionNumber,
+						MinValue:    new(float64),
+					},
 				},
-			})
+			},
+			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+				utils.Log.Debug("Update mission slash command received")
+
+				session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: "Mission updated successfully",
+					},
+				})
+			},
 		},
-	},
+		{
+			Data: &discordgo.ApplicationCommand{
+				Name:        "get-missions",
+				Description: "Get all missions data",
+			},
+			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+				utils.Log.Debug("Get missions slash command received")
+				missions := dbController.GetMissions()
+
+				session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: fmt.Sprintf("Existing missions: %+v", missions),
+					},
+				})
+			},
+		},
+		{
+			Data: &discordgo.ApplicationCommand{
+				Name:        "cancel-mission",
+				Description: "Cancel a mission",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Name:        "id",
+						Description: "ID of the mission",
+						Type:        discordgo.ApplicationCommandOptionString,
+						Required:    true,
+					},
+				},
+			},
+			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+				utils.Log.Debug("Cancel mission slash command received")
+
+				session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: "Mission canceled successfully",
+					},
+				})
+			},
+		},
+	}
 }

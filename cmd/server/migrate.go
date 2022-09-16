@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/controllers"
+	"github.com/cardboard-citizens/cz-goodboard-api/internal/database"
+	"github.com/cardboard-citizens/cz-goodboard-api/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -11,9 +12,16 @@ func migrateCommand() *cobra.Command {
 		Short: "Migrate the database",
 		Long:  "Migrate the database to match the given schema",
 		Run: func(cmd *cobra.Command, args []string) {
-			server := controllers.Server{}
-			server.InitializeDb(cmd.Flag("dbdriver").Value.String(), cmd.Flag("dbdriver").Value.String())
-			server.MigrateDb()
+			databaseController := database.DatabaseController{
+				DbDriver: cmd.Flag("dbdriver").Value.String(),
+				DbName:   cmd.Flag("dbname").Value.String(),
+			}
+			err := databaseController.Initialize()
+			if err != nil {
+				utils.Log.Error(err)
+				return
+			}
+			databaseController.Migrate()
 		},
 	}
 
