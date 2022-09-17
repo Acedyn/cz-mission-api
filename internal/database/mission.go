@@ -3,11 +3,11 @@ package database
 import (
 	"fmt"
 
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/models"
+	"github.com/cardboard-citizens/cz-mission-api/internal/models"
 )
 
 func (controller *DatabaseController) CreateMission(mission *models.Mission) (err error) {
-	err = mission.Setup()
+	err = mission.Initialize()
 	if err != nil {
 		return fmt.Errorf("Could not initialize mission data\n\t%s", err)
 	}
@@ -22,5 +22,5 @@ func (controller *DatabaseController) CreateMission(mission *models.Mission) (er
 
 func (controller *DatabaseController) GetMissions() (missions []models.Mission) {
 	controller.DB.Find(&missions)
-    return missions
+	return missions
 }

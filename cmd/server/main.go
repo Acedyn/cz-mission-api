@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/utils"
+	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
 	"github.com/spf13/cobra"
 	"strconv"
 )

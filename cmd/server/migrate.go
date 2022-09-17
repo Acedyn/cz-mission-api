@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/database"
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/utils"
+	"github.com/cardboard-citizens/cz-mission-api/internal/database"
+	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +25,7 @@ func migrateCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringP("dbname", "n", "cz-goodboard", "Name of the database")
+	command.Flags().StringP("dbname", "n", "cz-mission", "Name of the database")
 	command.Flags().StringP("dbdriver", "d", "sqlite", "Driver that will be used to interact with the database (postgres, sqlite...)")
 	return command
 }

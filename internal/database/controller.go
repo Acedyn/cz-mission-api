@@ -5,8 +5,8 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/models"
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/utils"
+	"github.com/cardboard-citizens/cz-mission-api/internal/models"
+	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
 )
 
 type DatabaseController struct {

@@ -5,9 +5,9 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/database"
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/discord"
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/utils"
+	"github.com/cardboard-citizens/cz-mission-api/internal/database"
+	"github.com/cardboard-citizens/cz-mission-api/internal/discord"
+	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
 )
 
 type Server struct {

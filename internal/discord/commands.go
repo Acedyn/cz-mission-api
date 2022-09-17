@@ -3,10 +3,10 @@ package discord
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/database"
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/missions"
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/models"
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/utils"
+	"github.com/cardboard-citizens/cz-mission-api/internal/database"
+	"github.com/cardboard-citizens/cz-mission-api/internal/missions"
+	"github.com/cardboard-citizens/cz-mission-api/internal/models"
+	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
 	"strings"
 )
 
@@ -24,7 +24,7 @@ func getMissionChoices() []*discordgo.ApplicationCommandOptionChoice {
 
 func getInteractionOptions(interaction *discordgo.InteractionCreate) map[string]*discordgo.ApplicationCommandInteractionDataOption {
 	optionList := interaction.ApplicationCommandData().Options
-    optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(optionList))
+	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(optionList))
 	for _, option := range optionList {
 		optionMap[option.Name] = option
 	}
@@ -96,30 +96,26 @@ func GetCommands(dbController *database.DatabaseController) (commands []*Discord
 			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 				utils.Log.Debug("Create mission slash command received")
 				options := getInteractionOptions(interaction)
-				err := dbController.CreateMission(&models.Mission{
+				mission := models.Mission{
 					Name:             options["name"].StringValue(),
 					ShortDescription: options["short-description"].StringValue(),
 					LongDescription:  options["long-description"].StringValue(),
 					Class:            options["class"].StringValue(),
 					Reward:           options["reward"].FloatValue(),
-				})
-
+				}
+				err := dbController.CreateMission(&mission)
 				if err != nil {
-					session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-						Type: discordgo.InteractionResponseChannelMessageWithSource,
-						Data: &discordgo.InteractionResponseData{
-							Content: "An error occured while creating the mission",
-						},
-					})
+					utils.Log.Error(fmt.Errorf("An error occured while creating the mission %s\n\t%s", mission.Format(), err))
+					session.InteractionRespond(interaction.Interaction, CreateMissionError(&mission, err))
 					return
 				}
 
-				session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "Mission successfully created",
-					},
-				})
+				err = session.InteractionRespond(interaction.Interaction, CreateMissionResponse(&mission))
+				if err != nil {
+					utils.Log.Error(fmt.Errorf("An error occured while responding to the interaction %s\n\t%s", interaction.Message.ID, err))
+					session.InteractionRespond(interaction.Interaction, CreateMissionError(&mission, err))
+					return
+				}
 			},
 		},
 		{

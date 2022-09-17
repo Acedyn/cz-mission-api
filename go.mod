@@ -1,4 +1,4 @@
-module github.com/cardboard-citizens/cz-goodboard-api
+module github.com/cardboard-citizens/cz-mission-api
 
 go 1.18
 

@@ -3,8 +3,8 @@ package discord
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/database"
-	"github.com/cardboard-citizens/cz-goodboard-api/internal/utils"
+	"github.com/cardboard-citizens/cz-mission-api/internal/database"
+	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
 )
 
 type DiscordController struct {
