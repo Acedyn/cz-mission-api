@@ -2,16 +2,28 @@ package discord
 
 import (
 	"fmt"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/cardboard-citizens/cz-mission-api/internal/database"
 	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
 )
 
+var (
+	controllerInitializers = make([]func(*DiscordController) error, 0)
+	controllerListeners    = make([]func(*DiscordController) error, 0)
+	controllerCleanups     = make([]func(*DiscordController) error, 0)
+)
+
 type DiscordController struct {
 	*discordgo.Session
-	GuildId            string
-	Commands           []*DiscordCommand
 	RegisteredCommands []*discordgo.ApplicationCommand
+	GuildId            string
+
+	Commands map[string]*DiscordCommand
+	Buttons  map[string]*DiscordButton
+
+	initialized        bool
+	databaseController *database.DatabaseController
 }
 
 func (controller *DiscordController) Initialize(botToken string, databaseController *database.DatabaseController) (err error) {
@@ -20,8 +32,8 @@ func (controller *DiscordController) Initialize(botToken string, databaseControl
 		return fmt.Errorf("Could not open discord session\n\t%s", err)
 	}
 
-	controller.Session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		utils.Log.Info("Discord session opened as :", s.State.User.Username, "#", s.State.User.Discriminator)
+	controller.Session.AddHandler(func(session *discordgo.Session, ready *discordgo.Ready) {
+		utils.Log.Info("Discord session opened as :", session.State.User.Username, "#", session.State.User.Discriminator)
 	})
 
 	err = controller.Session.Open()
@@ -29,23 +41,26 @@ func (controller *DiscordController) Initialize(botToken string, databaseControl
 		return fmt.Errorf("Could not open discord session\n\t%s", err)
 	}
 
-	controller.Commands = GetCommands(databaseController)
+	// The database controller must be initialized before the rest
+	controller.databaseController = databaseController
+	for _, initializer := range controllerInitializers {
+		initializer(controller)
+	}
+
+	controller.initialized = true
 	return err
 }
 
-func (controller *DiscordController) RegisterCommands() (err error) {
-	controller.RegisteredCommands = make([]*discordgo.ApplicationCommand, len(controller.Commands))
-	for index, command := range controller.Commands {
-		appCommand, err := controller.Session.ApplicationCommandCreate(controller.Session.State.User.ID, controller.GuildId, command.Data)
-		if err != nil {
-			return fmt.Errorf("Could not register command %s\n\t%s", command.Data.Name, err)
-		}
-		utils.Log.Info("Discord command registered :", command.Data.Name)
-		controller.RegisteredCommands[index] = appCommand
+func (controller *DiscordController) Listen() {
+	for _, listener := range controllerListeners {
+		listener(controller)
 	}
+}
 
-	utils.Log.Info("Discord commands registration completed")
-	return err
+func (controller *DiscordController) Cleanup() {
+	for _, listener := range controllerCleanups {
+		listener(controller)
+	}
 }
 
 func (controller *DiscordController) DeregisterCommands() (err error) {
@@ -59,14 +74,4 @@ func (controller *DiscordController) DeregisterCommands() (err error) {
 
 	utils.Log.Info("Discord commands deregistration completed")
 	return err
-}
-
-func (controller *DiscordController) ListenCommands() {
-	controller.Session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		for _, command := range controller.Commands {
-			if command.Data.Name == i.ApplicationCommandData().Name {
-				command.Handler(s, i)
-			}
-		}
-	})
 }

@@ -6,5 +6,7 @@ var TwitterMissions = map[string]*MissionClass{
 		Validation: func() bool {
 			return true
 		},
+		Logo:        "https://assets.stickpng.com/thumbs/580b57fcd9996e24bc43c53e.png",
+		Description: "Like a twitter post ",
 	},
 }

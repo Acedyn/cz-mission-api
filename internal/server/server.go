@@ -49,7 +49,7 @@ func (server *Server) Run() (err error) {
 		return fmt.Errorf("Could not run server: Initialization not completed")
 	}
 
-	server.DiscordController.ListenCommands()
+	server.DiscordController.Listen()
 
 	stopSignal := make(chan os.Signal, 1)
 	signal.Notify(stopSignal, os.Interrupt)

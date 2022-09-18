@@ -2,8 +2,11 @@ package database
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/cardboard-citizens/cz-mission-api/internal/models"
+	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
+	"golang.org/x/exp/slices"
 )
 
 func (controller *DatabaseController) CreateMission(mission *models.Mission) (err error) {
@@ -20,7 +23,35 @@ func (controller *DatabaseController) CreateMission(mission *models.Mission) (er
 	return err
 }
 
-func (controller *DatabaseController) GetMissions() (missions []models.Mission) {
-	controller.DB.Find(&missions)
+func (controller *DatabaseController) GetMission(id uint32) (mission models.Mission) {
+	controller.DB.First(&mission)
+	return mission
+}
+
+func (controller *DatabaseController) GetMissions(limit int, sort *string) (missions []models.Mission) {
+	defaultSort := "updated_at"
+	if sort == nil {
+		sort = &defaultSort
+	}
+	if slices.Contains(GetMissionFieldNames(), *sort) {
+		utils.Log.Warning(GetMissionFieldNames())
+		utils.Log.Warning("Invalid sort key on mission database fetching (", *sort, "): Using", defaultSort)
+		sort = &defaultSort
+	}
+	controller.DB.Limit(limit).Order(fmt.Sprintf("%s desc", *sort)).Find(&missions)
 	return missions
+}
+
+func GetMissionFieldNames() []string {
+	missionType := reflect.TypeOf((*models.Mission)(nil)).Elem()
+	fieldNames := make([]string, 0, missionType.NumField())
+
+	for i := 0; i < missionType.NumField(); i++ {
+		field := missionType.Field(i)
+		if tag := field.Tag.Get("json"); tag != "" {
+			fieldNames = append(fieldNames, tag)
+		}
+	}
+
+	return fieldNames
 }

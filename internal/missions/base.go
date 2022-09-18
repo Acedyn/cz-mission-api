@@ -1,19 +1,16 @@
 package missions
 
 type MissionClass struct {
-	Category   string
-	Validation func() bool
-}
-
-type MissionInstance struct {
-	Data string
-	Type MissionClass
+	Category    string
+	Description string
+	Validation  func() bool
+	Logo        string
 }
 
 func GetMissionsClasses() map[string]*MissionClass {
-	var missions = make(map[string]*MissionClass)
+	missions := make(map[string]*MissionClass)
 
-	var missionGroups = []map[string]*MissionClass{
+	missionGroups := []map[string]*MissionClass{
 		TwitterMissions,
 		DiscordMissions,
 	}
