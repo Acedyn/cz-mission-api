@@ -13,7 +13,12 @@ func serveCommand() *cobra.Command {
 		Long:  "Start the database connection, REST API and the discord API",
 		Run: func(cmd *cobra.Command, args []string) {
 			server := server.Server{}
-			err := server.Initialize(cmd.Flag("dbdriver").Value.String(), cmd.Flag("dbname").Value.String(), cmd.Flag("discordbottoken").Value.String(), cmd.Flag("discordguildid").Value.String())
+			err := server.Initialize(
+				cmd.Flag("dbdriver").Value.String(),
+				cmd.Flag("dbname").Value.String(),
+				cmd.Flag("discordbottoken").Value.String(),
+				cmd.Flag("discordguildid").Value.String(),
+			)
 			if err != nil {
 				utils.Log.Error(err)
 				return
@@ -28,9 +33,12 @@ func serveCommand() *cobra.Command {
 
 	command.Flags().StringP("port", "p", "8080", "HTTP port to listen to")
 	command.Flags().StringP("dbname", "n", "cz-mission", "Name of the database")
-	command.Flags().StringP("dbdriver", "d", "sqlite", "Driver that will be used to interact with the database (postgres, sqlite...)")
-	command.Flags().StringP("discordbottoken", "b", "", "Private token to posess the bot")
-	command.Flags().StringP("discordguildid", "g", "", "ID of the discord server")
+	command.Flags().
+		StringP("dbdriver", "d", "sqlite", "Driver that will be used to interact with the database (postgres, sqlite...)")
+	command.Flags().
+		StringP("discordbottoken", "b", "", "Private token to posess the bot")
+	command.Flags().
+		StringP("discordguildid", "g", "", "ID of the discord server")
 	command.MarkFlagRequired("bottoken")
 	command.MarkFlagRequired("guildid")
 	return command

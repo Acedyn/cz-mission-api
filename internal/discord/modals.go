@@ -2,12 +2,29 @@ package discord
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/cardboard-citizens/cz-mission-api/internal/missions"
 	"github.com/cardboard-citizens/cz-mission-api/internal/models"
 )
 
-func MissionModal(mission *models.Mission) []discordgo.MessageComponent {
+func getMissionOptions(defaultOption string) []discordgo.SelectMenuOption {
+	missionClasses := missions.GetMissionsClasses()
+	missionClassKeys := missions.GetMissionClassKeys()
+	missionOptions := make([]discordgo.SelectMenuOption, 0)
+	for _, classKey := range missionClassKeys {
+		missionOptions = append(missionOptions, discordgo.SelectMenuOption{
+			Label:       strings.Title(strings.Replace(classKey, "-", " ", -1)),
+			Value:       classKey,
+			Default:     classKey == defaultOption,
+			Description: missionClasses[classKey].Description,
+		})
+	}
+	return missionOptions
+}
+
+func getMissionModal(mission *models.Mission) []discordgo.MessageComponent {
 	return []discordgo.MessageComponent{
 		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
@@ -16,7 +33,7 @@ func MissionModal(mission *models.Mission) []discordgo.MessageComponent {
 					Style:       discordgo.TextInputShort,
 					Placeholder: "Insert new name",
 					Value:       mission.Name,
-					CustomID:    fmt.Sprintf("update-mission:%d:name", mission.ID),
+					CustomID:    "name",
 				},
 			},
 		},
@@ -27,7 +44,7 @@ func MissionModal(mission *models.Mission) []discordgo.MessageComponent {
 					Style:       discordgo.TextInputShort,
 					Placeholder: "Insert new short description",
 					Value:       mission.ShortDescription,
-					CustomID:    fmt.Sprintf("update-mission:%d:short_description", mission.ID),
+					CustomID:    "short-description",
 				},
 			},
 		},
@@ -38,17 +55,18 @@ func MissionModal(mission *models.Mission) []discordgo.MessageComponent {
 					Style:       discordgo.TextInputParagraph,
 					Placeholder: "Insert new long description",
 					Value:       mission.LongDescription,
-					CustomID:    fmt.Sprintf("update-mission:%d:long_description", mission.ID),
+					CustomID:    "long-description",
 				},
 			},
 		},
 		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
-				discordgo.SelectMenu{
-					Placeholder: "Select new class",
-					MaxValues:   1,
-					Options:     getMissionOptions(mission.Class),
-					CustomID:    fmt.Sprintf("update-mission:%d:reward", mission.ID),
+				discordgo.TextInput{
+					Label:       "Class",
+					Style:       discordgo.TextInputShort,
+					Placeholder: "Insert new class",
+					Value:       mission.Class,
+					CustomID:    "class",
 				},
 			},
 		},
@@ -59,27 +77,7 @@ func MissionModal(mission *models.Mission) []discordgo.MessageComponent {
 					Style:       discordgo.TextInputShort,
 					Placeholder: "Insert new reward",
 					Value:       fmt.Sprintf("%f", mission.Reward),
-					CustomID:    fmt.Sprintf("update-mission:%d:reward", mission.ID),
-				},
-			},
-		},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.Button{
-					Emoji: discordgo.ComponentEmoji{
-						Name: "🔧",
-					},
-					Label:    "Update",
-					Style:    discordgo.PrimaryButton,
-					CustomID: fmt.Sprintf("update-mission:%d", mission.ID),
-				},
-				discordgo.Button{
-					Emoji: discordgo.ComponentEmoji{
-						Name: "🗑️",
-					},
-					Label:    "Cancel",
-					Style:    discordgo.DangerButton,
-					CustomID: fmt.Sprintf("cancel-mission:%d", mission.ID),
+					CustomID:    "reward",
 				},
 			},
 		},

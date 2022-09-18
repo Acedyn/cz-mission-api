@@ -16,7 +16,9 @@ type Server struct {
 	DiscordController  *discord.DiscordController
 }
 
-func (server *Server) Initialize(dbDriver, dbName, discordToken, discordGuildId string) (err error) {
+func (server *Server) Initialize(
+	dbDriver, dbName, discordToken, discordGuildId string,
+) (err error) {
 	server.DatabaseController = &database.DatabaseController{
 		DbDriver: dbDriver,
 		DbName:   dbName,
@@ -29,12 +31,14 @@ func (server *Server) Initialize(dbDriver, dbName, discordToken, discordGuildId 
 	server.DiscordController = &discord.DiscordController{
 		GuildId: discordGuildId,
 	}
-	err = server.DiscordController.Initialize(discordToken, server.DatabaseController)
+	err = server.DiscordController.Initialize(
+		discordToken,
+		server.DatabaseController,
+	)
 	if err != nil {
 		return fmt.Errorf("Could not Initialize discord connection\n\t%s", err)
 	}
 
-	err = server.DiscordController.RegisterCommands()
 	if err != nil {
 		return fmt.Errorf("Could not register discord commands\n\t%s", err)
 	}
@@ -66,14 +70,9 @@ func (server *Server) Run() (err error) {
 }
 
 func (server *Server) Shutdown() (err error) {
-	err = server.DiscordController.DeregisterCommands()
+	err = server.DiscordController.Shutdown()
 	if err != nil {
-		return fmt.Errorf("Could not deregister discord commands\n\t%s", err)
-	}
-
-	err = server.DiscordController.Session.Close()
-	if err != nil {
-		return fmt.Errorf("Could not close discord session\n\t%s", err)
+		return fmt.Errorf("An error occured while shuting down the discord controller\n\t%s", err)
 	}
 
 	utils.Log.Info("Server shutdown successfull")

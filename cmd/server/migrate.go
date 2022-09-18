@@ -26,7 +26,8 @@ func migrateCommand() *cobra.Command {
 	}
 
 	command.Flags().StringP("dbname", "n", "cz-mission", "Name of the database")
-	command.Flags().StringP("dbdriver", "d", "sqlite", "Driver that will be used to interact with the database (postgres, sqlite...)")
+	command.Flags().
+		StringP("dbdriver", "d", "sqlite", "Driver that will be used to interact with the database (postgres, sqlite...)")
 	return command
 }
 

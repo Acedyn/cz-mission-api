@@ -2,10 +2,8 @@ package discord
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/cardboard-citizens/cz-mission-api/internal/missions"
 	"github.com/cardboard-citizens/cz-mission-api/internal/models"
 )
 
@@ -13,21 +11,6 @@ const (
 	THUMBNAIL_SUCCESS = "https://icons.iconarchive.com/icons/paomedia/small-n-flat/32/sign-check-icon.png"
 	THUMBNAIL_ERROR   = "https://icons.iconarchive.com/icons/paomedia/small-n-flat/32/sign-error-icon.png"
 )
-
-func getMissionOptions(defaultOption string) []discordgo.SelectMenuOption {
-	missionClasses := missions.GetMissionsClasses()
-	missionClassKeys := missions.GetMissionClassKeys()
-	missionOptions := make([]discordgo.SelectMenuOption, 0)
-	for _, classKey := range missionClassKeys {
-		missionOptions = append(missionOptions, discordgo.SelectMenuOption{
-			Label:       strings.Title(strings.Replace(classKey, "-", " ", -1)),
-			Value:       classKey,
-			Default:     classKey == defaultOption,
-			Description: missionClasses[classKey].Description,
-		})
-	}
-	return missionOptions
-}
 
 func MissionEmbed(mission *models.Mission) *discordgo.MessageEmbed {
 	return &discordgo.MessageEmbed{
@@ -65,23 +48,40 @@ func MissionEmbed(mission *models.Mission) *discordgo.MessageEmbed {
 		},
 		URL: "https://cardboardcitizen.com",
 		Footer: &discordgo.MessageEmbedFooter{
-			Text: fmt.Sprintf("Mission last updated on %s", mission.UpdatedAt.Format("2 jan 2006 15:04")),
+			Text: fmt.Sprintf(
+				"Mission last updated on %s",
+				mission.UpdatedAt.Format("2 jan 2006 15:04"),
+			),
 		},
 	}
 }
 
-func MissionResponse(mission *models.Mission, message string, embeds []*discordgo.MessageEmbed, components []discordgo.MessageComponent) *discordgo.InteractionResponse {
+func MissionResponse(
+	mission *models.Mission,
+	message string,
+	embeds []*discordgo.MessageEmbed,
+	components []discordgo.MessageComponent,
+) *discordgo.InteractionResponse {
 	return &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content:    fmt.Sprintf("Mission %s#%d %s", mission.Name, mission.ID, message),
+			Content: fmt.Sprintf(
+				"Mission %s#%d %s",
+				mission.Name,
+				mission.ID,
+				message,
+			),
 			Embeds:     embeds,
 			Components: components,
 		},
 	}
 }
 
-func ErrorResponse(message string, err error, retry string) *discordgo.InteractionResponse {
+func ErrorResponse(
+	message string,
+	err error,
+	retry string,
+) *discordgo.InteractionResponse {
 	return &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -111,7 +111,10 @@ func ErrorResponse(message string, err error, retry string) *discordgo.Interacti
 	}
 }
 
-func CreateMissionResponse(controller *DiscordController, mission *models.Mission) *discordgo.InteractionResponse {
+func CreateMissionResponse(
+	controller *DiscordController,
+	mission *models.Mission,
+) *discordgo.InteractionResponse {
 	missionEmbed := MissionEmbed(mission)
 	missionEmbed.Color = 771906 // #0BC742
 	missionEmbed.Footer.IconURL = THUMBNAIL_SUCCESS
@@ -125,12 +128,26 @@ func CreateMissionResponse(controller *DiscordController, mission *models.Missio
 	return response
 }
 
-func CreateMissionError(mission *models.Mission, err error) *discordgo.InteractionResponse {
-	response := ErrorResponse(fmt.Sprintf("An error occured during the creation of the mission %s#%d", mission.Name, mission.ID), err, "create-mission")
+func CreateMissionError(
+	mission *models.Mission,
+	err error,
+) *discordgo.InteractionResponse {
+	response := ErrorResponse(
+		fmt.Sprintf(
+			"An error occured during the creation of the mission %s#%d",
+			mission.Name,
+			mission.ID,
+		),
+		err,
+		"create-mission",
+	)
 	return response
 }
 
-func GetMissionResponse(controller *DiscordController, mission *models.Mission) *discordgo.InteractionResponse {
+func GetMissionResponse(
+	controller *DiscordController,
+	mission *models.Mission,
+) *discordgo.InteractionResponse {
 	missionEmbed := MissionEmbed(mission)
 	missionEmbed.Color = 39423 // #0099FF
 	missionEmbed.Footer.IconURL = THUMBNAIL_SUCCESS
@@ -145,26 +162,44 @@ func GetMissionResponse(controller *DiscordController, mission *models.Mission) 
 }
 
 func GetMissionError(err error) *discordgo.InteractionResponse {
-	response := ErrorResponse("No mission could be found with the provided parameters", err, "get-mission")
+	response := ErrorResponse(
+		"No mission could be found with the provided parameters",
+		err,
+		"get-mission",
+	)
 	return response
 }
 
-func UpdateMissionResponse(mission *models.Mission) *discordgo.InteractionResponse {
+func UpdateMissionResponse(
+	mission *models.Mission,
+) *discordgo.InteractionResponse {
 	missionEmbed := MissionEmbed(mission)
 	missionEmbed.Color = 39423 // #0099FF
 	missionEmbed.Footer.IconURL = THUMBNAIL_SUCCESS
 
-	response := MissionResponse(mission, "successfully updated", []*discordgo.MessageEmbed{missionEmbed}, []discordgo.MessageComponent{})
+	response := MissionResponse(
+		mission,
+		"successfully updated",
+		[]*discordgo.MessageEmbed{missionEmbed},
+		[]discordgo.MessageComponent{},
+	)
 	response.Data.Title = "Mission updated"
 	return response
 }
 
-func CancelMissionResponse(mission *models.Mission) *discordgo.InteractionResponse {
+func CancelMissionResponse(
+	mission *models.Mission,
+) *discordgo.InteractionResponse {
 	missionEmbed := MissionEmbed(mission)
 	missionEmbed.Color = 15219772 // #E83C3C
 	missionEmbed.Footer.IconURL = THUMBNAIL_ERROR
 
-	response := MissionResponse(mission, "successfully canceled", []*discordgo.MessageEmbed{missionEmbed}, []discordgo.MessageComponent{})
+	response := MissionResponse(
+		mission,
+		"successfully canceled",
+		[]*discordgo.MessageEmbed{missionEmbed},
+		[]discordgo.MessageComponent{},
+	)
 	response.Data.Title = "Mission canceled"
 	return response
 }

@@ -62,7 +62,11 @@ func (logger *Logger) Initialize() {
 	logger.infoLogger = log.New(os.Stdout, "[INFO] ", log.Ldate|log.Ltime)
 	logger.warningLogger = log.New(os.Stdout, "[WARNING] ", log.Ldate|log.Ltime)
 	logger.errorLogger = log.New(os.Stdout, "[ERROR] ", log.Ldate|log.Ltime)
-	logger.criticalLogger = log.New(os.Stdout, "[CRITICAL] ", log.Ldate|log.Ltime)
+	logger.criticalLogger = log.New(
+		os.Stdout,
+		"[CRITICAL] ",
+		log.Ldate|log.Ltime,
+	)
 }
 
 func init() {

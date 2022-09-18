@@ -39,7 +39,10 @@ func (controller *DatabaseController) Initialize() (err error) {
 func (controller *DatabaseController) Migrate() (err error) {
 	err = controller.DB.Debug().AutoMigrate(models.Mission{})
 	if err != nil {
-		return fmt.Errorf("An error occured during the database migration\n\t%s", err)
+		return fmt.Errorf(
+			"An error occured during the database migration\n\t%s",
+			err,
+		)
 	}
 
 	utils.Log.Info("Database migration successfull")

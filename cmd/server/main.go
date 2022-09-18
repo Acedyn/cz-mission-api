@@ -14,14 +14,17 @@ var rootCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		verbosity, err := strconv.Atoi(cmd.Flag("verbosity").Value.String())
 		if err != nil {
-			utils.Log.Error("Invalid verbosity level: Setting verbosity to DEBUG")
+			utils.Log.Error(
+				"Invalid verbosity level: Setting verbosity to DEBUG",
+			)
 		}
 		utils.Log.SetLevel(verbosity)
 	},
 }
 
 func init() {
-	rootCmd.PersistentFlags().IntP("verbosity", "v", 20, "Verbosity level on a base of 10 (10 = DEBUG 50 = CRITICAL)")
+	rootCmd.PersistentFlags().
+		IntP("verbosity", "v", 20, "Verbosity level on a base of 10 (10 = DEBUG 50 = CRITICAL)")
 }
 
 func main() {

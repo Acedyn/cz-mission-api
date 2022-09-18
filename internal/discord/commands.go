@@ -15,10 +15,13 @@ func getMissionChoices() []*discordgo.ApplicationCommandOptionChoice {
 	missionClassKeys := missions.GetMissionClassKeys()
 	missionChoices := make([]*discordgo.ApplicationCommandOptionChoice, 0)
 	for _, classKey := range missionClassKeys {
-		missionChoices = append(missionChoices, &discordgo.ApplicationCommandOptionChoice{
-			Name:  strings.Title(strings.Replace(classKey, "-", " ", -1)),
-			Value: classKey,
-		})
+		missionChoices = append(
+			missionChoices,
+			&discordgo.ApplicationCommandOptionChoice{
+				Name:  strings.Title(strings.Replace(classKey, "-", " ", -1)),
+				Value: classKey,
+			},
+		)
 	}
 	return missionChoices
 }
@@ -27,17 +30,25 @@ func getSortChoices() []*discordgo.ApplicationCommandOptionChoice {
 	sortKeys := database.GetMissionFieldNames()
 	missionChoices := make([]*discordgo.ApplicationCommandOptionChoice, 0)
 	for _, sortKey := range sortKeys {
-		missionChoices = append(missionChoices, &discordgo.ApplicationCommandOptionChoice{
-			Name:  strings.Title(strings.Replace(sortKey, "_", " ", -1)),
-			Value: sortKey,
-		})
+		missionChoices = append(
+			missionChoices,
+			&discordgo.ApplicationCommandOptionChoice{
+				Name:  strings.Title(strings.Replace(sortKey, "_", " ", -1)),
+				Value: sortKey,
+			},
+		)
 	}
 	return missionChoices
 }
 
-func getInteractionOptions(interaction *discordgo.InteractionCreate) map[string]*discordgo.ApplicationCommandInteractionDataOption {
+func getInteractionOptions(
+	interaction *discordgo.InteractionCreate,
+) map[string]*discordgo.ApplicationCommandInteractionDataOption {
 	optionList := interaction.ApplicationCommandData().Options
-	optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(optionList))
+	optionMap := make(
+		map[string]*discordgo.ApplicationCommandInteractionDataOption,
+		len(optionList),
+	)
 	for _, option := range optionList {
 		optionMap[option.Name] = option
 	}
@@ -59,12 +70,15 @@ func getCommands(controller *DiscordController) map[string]*DiscordCommand {
 			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 				utils.Log.Info("Ping from discord slash command")
 
-				session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "Pong, connection with the server successfull",
+				session.InteractionRespond(
+					interaction.Interaction,
+					&discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Content: "Pong, connection with the server successfull",
+						},
 					},
-				})
+				)
 			},
 		},
 		"create-mission": {
@@ -118,15 +132,36 @@ func getCommands(controller *DiscordController) map[string]*DiscordCommand {
 				}
 				err := controller.databaseController.CreateMission(&mission)
 				if err != nil {
-					utils.Log.Error(fmt.Errorf("An error occured while creating the mission %s\n\t%s", mission.Format(), err))
-					session.InteractionRespond(interaction.Interaction, CreateMissionError(&mission, err))
+					utils.Log.Error(
+						fmt.Errorf(
+							"An error occured while creating the mission %s\n\t%s",
+							mission.Format(),
+							err,
+						),
+					)
+					session.InteractionRespond(
+						interaction.Interaction,
+						CreateMissionError(&mission, err),
+					)
 					return
 				}
 
-				err = session.InteractionRespond(interaction.Interaction, controller.CreateMissionResponse(&mission))
+				err = session.InteractionRespond(
+					interaction.Interaction,
+					CreateMissionResponse(controller, &mission),
+				)
 				if err != nil {
-					utils.Log.Error(fmt.Errorf("An error occured while responding to the interaction %s\n\t%s", interaction.ID, err))
-					session.InteractionRespond(interaction.Interaction, CreateMissionError(&mission, err))
+					utils.Log.Error(
+						fmt.Errorf(
+							"An error occured while responding to the interaction %s\n\t%s",
+							interaction.ID,
+							err,
+						),
+					)
+					session.InteractionRespond(
+						interaction.Interaction,
+						CreateMissionError(&mission, err),
+					)
 					return
 				}
 			},
@@ -162,20 +197,38 @@ func getCommands(controller *DiscordController) map[string]*DiscordCommand {
 					sortValue := sortOption.StringValue()
 					sort = &sortValue
 				}
-				missions := controller.databaseController.GetMissions(limit, sort)
+				missions := controller.databaseController.GetMissions(
+					limit,
+					sort,
+				)
 
 				if missions == nil || len(missions) == 0 {
 					session.InteractionRespond(
 						interaction.Interaction,
-						GetMissionError(fmt.Errorf("Database returned 0 matched with the options \nLimit: %d\nSort: %s", limit, *sort)),
+						GetMissionError(
+							fmt.Errorf(
+								"Database returned 0 matched with the options \nLimit: %d\nSort: %s",
+								limit,
+								*sort,
+							),
+						),
 					)
 					return
 				}
 
 				for _, mission := range missions {
-					err := session.InteractionRespond(interaction.Interaction, GetMissionResponse(controller, &mission))
+					err := session.InteractionRespond(
+						interaction.Interaction,
+						GetMissionResponse(controller, &mission),
+					)
 					if err != nil {
-						utils.Log.Error(fmt.Errorf("An error occured while responding to the interaction %s\n\t%s", interaction.Message.ID, err))
+						utils.Log.Error(
+							fmt.Errorf(
+								"An error occured while responding to the interaction %s\n\t%s",
+								interaction.Message.ID,
+								err,
+							),
+						)
 						return
 					}
 				}
@@ -185,46 +238,82 @@ func getCommands(controller *DiscordController) map[string]*DiscordCommand {
 }
 
 func init() {
-	controllerInitializers = append(controllerInitializers, func(controller *DiscordController) (err error) {
-		controller.Commands = getCommands(controller)
-		controller.RegisteredCommands = make([]*discordgo.ApplicationCommand, len(controller.Commands))
-		for _, command := range controller.Commands {
-			appCommand, err := controller.Session.ApplicationCommandCreate(controller.Session.State.User.ID, controller.GuildId, command.Data)
-			if err != nil {
-				return fmt.Errorf("Could not register command %s\n\t%s", command.Data.Name, err)
+	controllerInitializers = append(
+		controllerInitializers,
+		func(controller *DiscordController) (err error) {
+			controller.Commands = getCommands(controller)
+			controller.RegisteredCommands = make(
+				[]*discordgo.ApplicationCommand,
+				0, len(controller.Commands),
+			)
+			for _, command := range controller.Commands {
+				appCommand, err := controller.Session.ApplicationCommandCreate(
+					controller.Session.State.User.ID,
+					controller.GuildId,
+					command.Data,
+				)
+				if err != nil {
+					return fmt.Errorf(
+						"Could not register command %s\n\t%s",
+						command.Data.Name,
+						err,
+					)
+				}
+				utils.Log.Info(
+					"Discord command registered :",
+					command.Data.Name,
+				)
+				controller.RegisteredCommands = append(
+					controller.RegisteredCommands,
+					appCommand,
+				)
 			}
-			utils.Log.Info("Discord command registered :", command.Data.Name)
-			controller.RegisteredCommands = append(controller.RegisteredCommands, appCommand)
-		}
 
-		utils.Log.Info("Discord commands registration completed")
-		return err
-	})
+			utils.Log.Info("Discord commands registration completed")
+			return err
+		},
+	)
 
-	controllerListeners = append(controllerListeners, func(controller *DiscordController) (err error) {
-		controller.Session.AddHandler(func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-			if interaction.Type != discordgo.InteractionApplicationCommand {
-				return
+	controllerListeners = append(
+		controllerListeners,
+		func(controller *DiscordController) (err error) {
+			controller.Session.AddHandler(
+				func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+					if interaction.Type != discordgo.InteractionApplicationCommand {
+						return
+					}
+					command, ok := controller.Commands[interaction.ApplicationCommandData().Name]
+					if ok {
+						command.Handler(session, interaction)
+					}
+				},
+			)
+			utils.Log.Info("Discord command listeners started")
+			return err
+		},
+	)
+
+	controllerCleanups = append(
+		controllerCleanups,
+		func(controller *DiscordController) (err error) {
+			for _, command := range controller.RegisteredCommands {
+				err := controller.Session.ApplicationCommandDelete(
+					controller.Session.State.User.ID,
+					controller.GuildId,
+					command.ID,
+				)
+				if err != nil {
+					return fmt.Errorf(
+						"Could not deregister command %s\n\t%s",
+						command.Name,
+						err,
+					)
+				}
+				utils.Log.Info("Discord command deregistered :", command.Name)
 			}
-			command, ok := controller.Commands[interaction.ApplicationCommandData().Name]
-			if ok {
-				command.Handler(session, interaction)
-			}
-		})
-		utils.Log.Info("Discord command listeners started")
-		return err
-	})
 
-	controllerCleanups = append(controllerCleanups, func(controller *DiscordController) (err error) {
-		for _, command := range controller.RegisteredCommands {
-			err := controller.Session.ApplicationCommandDelete(controller.Session.State.User.ID, controller.GuildId, command.ID)
-			if err != nil {
-				return fmt.Errorf("Could not deregister command %s\n\t%s", command.Name, err)
-			}
-			utils.Log.Info("Discord command deregistered :", command.Name)
-		}
-
-		utils.Log.Info("Discord commands deregistration completed")
-		return err
-	})
+			utils.Log.Info("Discord commands deregistration completed")
+			return err
+		},
+	)
 }

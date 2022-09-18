@@ -9,7 +9,9 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func (controller *DatabaseController) CreateMission(mission *models.Mission) (err error) {
+func (controller *DatabaseController) CreateMission(
+	mission *models.Mission,
+) (err error) {
 	err = mission.Initialize()
 	if err != nil {
 		return fmt.Errorf("Could not initialize mission data\n\t%s", err)
@@ -23,22 +25,35 @@ func (controller *DatabaseController) CreateMission(mission *models.Mission) (er
 	return err
 }
 
-func (controller *DatabaseController) GetMission(id uint32) (mission models.Mission) {
-	controller.DB.First(&mission)
-	return mission
+func (controller *DatabaseController) GetMission(
+	id uint32,
+) *models.Mission {
+	var mission models.Mission
+	controller.DB.First(&mission, id)
+	return &mission
 }
 
-func (controller *DatabaseController) GetMissions(limit int, sort *string) (missions []models.Mission) {
+func (controller *DatabaseController) GetMissions(
+	limit int,
+	sort *string,
+) (missions []models.Mission) {
 	defaultSort := "updated_at"
 	if sort == nil {
 		sort = &defaultSort
 	}
 	if slices.Contains(GetMissionFieldNames(), *sort) {
 		utils.Log.Warning(GetMissionFieldNames())
-		utils.Log.Warning("Invalid sort key on mission database fetching (", *sort, "): Using", defaultSort)
+		utils.Log.Warning(
+			"Invalid sort key on mission database fetching (",
+			*sort,
+			"): Using",
+			defaultSort,
+		)
 		sort = &defaultSort
 	}
-	controller.DB.Limit(limit).Order(fmt.Sprintf("%s desc", *sort)).Find(&missions)
+	controller.DB.Limit(limit).
+		Order(fmt.Sprintf("%s desc", *sort)).
+		Find(&missions)
 	return missions
 }
 

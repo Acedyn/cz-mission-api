@@ -26,15 +26,25 @@ type DiscordController struct {
 	databaseController *database.DatabaseController
 }
 
-func (controller *DiscordController) Initialize(botToken string, databaseController *database.DatabaseController) (err error) {
+func (controller *DiscordController) Initialize(
+	botToken string,
+	databaseController *database.DatabaseController,
+) (err error) {
 	controller.Session, err = discordgo.New("Bot " + botToken)
 	if err != nil {
 		return fmt.Errorf("Could not open discord session\n\t%s", err)
 	}
 
-	controller.Session.AddHandler(func(session *discordgo.Session, ready *discordgo.Ready) {
-		utils.Log.Info("Discord session opened as :", session.State.User.Username, "#", session.State.User.Discriminator)
-	})
+	controller.Session.AddHandler(
+		func(session *discordgo.Session, ready *discordgo.Ready) {
+			utils.Log.Info(
+				"Discord session opened as :",
+				session.State.User.Username,
+				"#",
+				session.State.User.Discriminator,
+			)
+		},
+	)
 
 	err = controller.Session.Open()
 	if err != nil {
@@ -51,27 +61,27 @@ func (controller *DiscordController) Initialize(botToken string, databaseControl
 	return err
 }
 
-func (controller *DiscordController) Listen() {
+func (controller *DiscordController) Listen() (err error) {
 	for _, listener := range controllerListeners {
-		listener(controller)
-	}
-}
-
-func (controller *DiscordController) Cleanup() {
-	for _, listener := range controllerCleanups {
-		listener(controller)
-	}
-}
-
-func (controller *DiscordController) DeregisterCommands() (err error) {
-	for _, command := range controller.RegisteredCommands {
-		err := controller.Session.ApplicationCommandDelete(controller.Session.State.User.ID, controller.GuildId, command.ID)
+		err = listener(controller)
 		if err != nil {
-			return fmt.Errorf("Could not deregister command %s\n\t%s", command.Name, err)
+			return fmt.Errorf("Could not start discord listener\n\t%s", err)
 		}
-		utils.Log.Info("Discord command deregistered :", command.Name)
+	}
+	return err
+}
+
+func (controller *DiscordController) Shutdown() (err error) {
+	for _, cleanup := range controllerCleanups {
+		err = cleanup(controller)
+		if err != nil {
+			return fmt.Errorf("Could not start discord listener\n\t%s", err)
+		}
 	}
 
-	utils.Log.Info("Discord commands deregistration completed")
+	err = controller.Session.Close()
+	if err != nil {
+		return fmt.Errorf("Could not close discord session\n\t%s", err)
+	}
 	return err
 }
