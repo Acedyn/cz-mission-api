@@ -21,6 +21,7 @@ type DiscordController struct {
 
 	Commands map[string]*DiscordCommand
 	Buttons  map[string]*DiscordButton
+	Modals  map[string]*DiscordModal
 
 	initialized        bool
 	databaseController *database.DatabaseController
@@ -75,7 +76,7 @@ func (controller *DiscordController) Shutdown() (err error) {
 	for _, cleanup := range controllerCleanups {
 		err = cleanup(controller)
 		if err != nil {
-			return fmt.Errorf("Could not start discord listener\n\t%s", err)
+			return fmt.Errorf("Could not start stop listener\n\t%s", err)
 		}
 	}
 

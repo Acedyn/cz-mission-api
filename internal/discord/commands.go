@@ -62,10 +62,10 @@ type DiscordCommand struct {
 
 func getCommands(controller *DiscordController) map[string]*DiscordCommand {
 	return map[string]*DiscordCommand{
-		"ping-command": {
+		"ping-server": {
 			Data: &discordgo.ApplicationCommand{
-				Name:        "ping-command",
-				Description: "Command for testing purpose",
+				Name:        "ping-server",
+				Description: "Test the connection with the server",
 			},
 			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 				utils.Log.Info("Ping from discord slash command")
@@ -87,35 +87,10 @@ func getCommands(controller *DiscordController) map[string]*DiscordCommand {
 				Description: "Create a mission",
 				Options: []*discordgo.ApplicationCommandOption{
 					{
-						Name:        "name",
-						Description: "Name of the mission",
-						Type:        discordgo.ApplicationCommandOptionString,
-						Required:    true,
-					},
-					{
-						Name:        "short-description",
-						Description: "Short description of the mission",
-						Type:        discordgo.ApplicationCommandOptionString,
-						Required:    true,
-					},
-					{
-						Name:        "long-description",
-						Description: "Long description of the mission",
-						Type:        discordgo.ApplicationCommandOptionString,
-						Required:    true,
-					},
-					{
 						Name:        "class",
 						Description: "The mission class defines the rules to complete the mission",
 						Type:        discordgo.ApplicationCommandOptionString,
 						Choices:     getMissionChoices(),
-						Required:    true,
-					},
-					{
-						Name:        "reward",
-						Description: "Reward of the mission",
-						Type:        discordgo.ApplicationCommandOptionNumber,
-						MinValue:    new(float64),
 						Required:    true,
 					},
 				},
@@ -124,64 +99,53 @@ func getCommands(controller *DiscordController) map[string]*DiscordCommand {
 				utils.Log.Debug("Create mission slash command received")
 				options := getInteractionOptions(interaction)
 				mission := models.Mission{
-					Name:             options["name"].StringValue(),
-					ShortDescription: options["short-description"].StringValue(),
-					LongDescription:  options["long-description"].StringValue(),
-					Class:            options["class"].StringValue(),
-					Reward:           options["reward"].FloatValue(),
+					Class: options["class"].StringValue(),
 				}
 				err := controller.databaseController.CreateMission(&mission)
 				if err != nil {
-					utils.Log.Error(
-						fmt.Errorf(
-							"An error occured while creating the mission %s\n\t%s",
-							mission.Format(),
-							err,
-						),
-					)
+					utils.Log.Error("An error occured while creating the mission", mission.Format(), "\n\t%s", err)
 					session.InteractionRespond(
 						interaction.Interaction,
-						CreateMissionError(&mission, err),
+						MissionResponseError(&mission, err),
 					)
 					return
 				}
 
 				err = session.InteractionRespond(
 					interaction.Interaction,
-					CreateMissionResponse(controller, &mission),
+					MissionModalResponse("Create Mission", controller, &mission),
 				)
 				if err != nil {
-					utils.Log.Error(
-						fmt.Errorf(
-							"An error occured while responding to the interaction %s\n\t%s",
-							interaction.ID,
-							err,
-						),
-					)
+					utils.Log.Error("An error occured while responding to the interaction", interaction.ID, "\n\t%s", err)
 					session.InteractionRespond(
 						interaction.Interaction,
-						CreateMissionError(&mission, err),
+						MissionResponseError(&mission, err),
 					)
 					return
 				}
 			},
 		},
-		"get-mission": {
+		"get-missions": {
 			Data: &discordgo.ApplicationCommand{
 				Name:        "get-missions",
 				Description: "Get multiple missions data",
 				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Name:        "limit",
-						Description: "Max missions to retrieve",
-						Type:        discordgo.ApplicationCommandOptionInteger,
-						MaxValue:    10.0,
-					},
+					// {
+					// 	Name:        "limit",
+					// 	Description: "Max missions to retrieve",
+					// 	Type:        discordgo.ApplicationCommandOptionInteger,
+					// 	MaxValue:    10.0,
+					// },
 					{
 						Name:        "sort",
 						Description: "Key to sort the existing missions",
 						Type:        discordgo.ApplicationCommandOptionString,
 						Choices:     getSortChoices(),
+					},
+					{
+						Name:        "ascending",
+						Description: "Get the first result after the sort",
+						Type:        discordgo.ApplicationCommandOptionBoolean,
 					},
 				},
 			},
@@ -197,40 +161,37 @@ func getCommands(controller *DiscordController) map[string]*DiscordCommand {
 					sortValue := sortOption.StringValue()
 					sort = &sortValue
 				}
+				var ascending bool = false
+				if ascendingOption, ok := options["ascending"]; ok {
+					ascending = ascendingOption.BoolValue()
+				}
 				missions := controller.databaseController.GetMissions(
 					limit,
 					sort,
+                    ascending,
 				)
 
 				if missions == nil || len(missions) == 0 {
+					err := fmt.Errorf(
+						"Database returned 0 matched with the options \nLimit: %d\nSort: %s",
+						limit,
+						*sort,
+					)
+					utils.Log.Error("An error occured while responding to the interaction", interaction.ID, "\n\t", err)
 					session.InteractionRespond(
 						interaction.Interaction,
-						GetMissionError(
-							fmt.Errorf(
-								"Database returned 0 matched with the options \nLimit: %d\nSort: %s",
-								limit,
-								*sort,
-							),
-						),
+						ErrorResponse("An error occured while responding to the command", err),
 					)
 					return
 				}
 
-				for _, mission := range missions {
-					err := session.InteractionRespond(
-						interaction.Interaction,
-						GetMissionResponse(controller, &mission),
-					)
-					if err != nil {
-						utils.Log.Error(
-							fmt.Errorf(
-								"An error occured while responding to the interaction %s\n\t%s",
-								interaction.Message.ID,
-								err,
-							),
-						)
-						return
-					}
+				err := session.InteractionRespond(
+					interaction.Interaction,
+					GetMissionResponse(controller, missions),
+				)
+				if err != nil {
+					utils.Log.Error("An error occured while responding to the interaction", interaction.ID, "\n\t", err)
+					return
 				}
 			},
 		},

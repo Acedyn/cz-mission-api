@@ -2,7 +2,6 @@ package discord
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -26,29 +25,17 @@ func getButtons(controller *DiscordController) map[string]*DiscordButton {
 				Style: discordgo.PrimaryButton,
 			},
 			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate, id string) {
-				utils.Log.Debug("Update mission", "", "component button instruction received")
+				utils.Log.Debug("Update mission", id, "component instruction received")
 
-				missionId, err := strconv.ParseInt(id, 10, 32)
+				mission, err := controller.databaseController.GetMissionFromString(id)
 				if err != nil {
-					utils.Log.Error("Could not handle mission update discord button", id, "Invalid ID")
-					return
-				}
-				mission := controller.databaseController.GetMission(uint32(missionId))
-				if mission == nil {
-					utils.Log.Error("Could not handle mission update discord button", id, ": Mission not found")
+					utils.Log.Error("Could not handle mission update discord button\n\t", err)
 					return
 				}
 
 				err = session.InteractionRespond(
 					interaction.Interaction,
-					&discordgo.InteractionResponse{
-						Type: discordgo.InteractionResponseModal,
-						Data: &discordgo.InteractionResponseData{
-							CustomID:   fmt.Sprintf("%s:%s", "update-mission", interaction.ID),
-							Title:      "Update Mission",
-							Components: getMissionModal(mission),
-						},
-					},
+					MissionModalResponse("Update Mission", controller, mission),
 				)
 
 				if err != nil {
@@ -72,7 +59,35 @@ func getButtons(controller *DiscordController) map[string]*DiscordButton {
 				Style: discordgo.DangerButton,
 			},
 			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate, id string) {
-				utils.Log.Debug("Cancel mission component button instruction received")
+				utils.Log.Debug("Cancel mission", id, "component instruction received")
+
+				mission, err := controller.databaseController.GetMissionFromString(id)
+				if err != nil {
+					utils.Log.Error("Could not handle mission cancel discord button\n\t", err)
+					return
+				}
+
+				err = controller.databaseController.CancelMission(mission)
+				if err != nil {
+					utils.Log.Error("Could not handle mission cancel discord button\n\t", err)
+					return
+				}
+
+				err = session.InteractionRespond(
+					interaction.Interaction,
+					CancelMissionResponse(mission),
+				)
+
+				if err != nil {
+					utils.Log.Error(
+						fmt.Errorf(
+							"An error occured while responding to the interaction %s\n\t%s",
+							interaction.ID,
+							err,
+						),
+					)
+					return
+				}
 			},
 		},
 	}
