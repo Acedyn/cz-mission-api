@@ -1,7 +1,13 @@
 package missions
 
 import (
+	"fmt"
+
 	"github.com/cardboard-citizens/cz-mission-api/internal/models"
+)
+
+var (
+	missionGroups = make([]map[string]*MissionClass, 0)
 )
 
 type MissionClass struct {
@@ -15,14 +21,9 @@ type MissionClass struct {
 func GetMissionsClasses() map[string]*MissionClass {
 	missions := make(map[string]*MissionClass)
 
-	missionGroups := []map[string]*MissionClass{
-		TwitterMissions,
-		DiscordMissions,
-	}
-
 	for _, missionGroup := range missionGroups {
-		for missionName, Mission := range missionGroup {
-			missions[missionName] = Mission
+		for missionName, mission := range missionGroup {
+			missions[fmt.Sprintf("%s-%s", mission.Category, missionName)] = mission
 		}
 	}
 

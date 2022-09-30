@@ -15,3 +15,7 @@ var TwitterMissions = map[string]*MissionClass{
 		Parameters:  []string{"link"},
 	},
 }
+
+func init() {
+	missionGroups = append(missionGroups, TwitterMissions)
+}

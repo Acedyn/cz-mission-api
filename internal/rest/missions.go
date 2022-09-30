@@ -50,9 +50,6 @@ func getMissionRoutes(controller *RestController) map[string]http.HandlerFunc {
 			)
 			SuccessResponse(w, missions, make([]error, 0))
 		},
-		"/completed": func(w http.ResponseWriter, r *http.Request) {
-			SuccessResponse(w, "hello world", make([]error, 0))
-		},
 	}
 }
 
