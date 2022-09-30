@@ -21,16 +21,13 @@ type DiscordController struct {
 
 	Commands map[string]*DiscordCommand
 	Buttons  map[string]*DiscordButton
-	Modals  map[string]*DiscordModal
+	Modals   map[string]*DiscordModal
 
 	initialized        bool
-	databaseController *database.DatabaseController
+	DatabaseController *database.DatabaseController
 }
 
-func (controller *DiscordController) Initialize(
-	botToken string,
-	databaseController *database.DatabaseController,
-) (err error) {
+func (controller *DiscordController) Initialize(botToken string,) (err error) {
 	controller.Session, err = discordgo.New("Bot " + botToken)
 	if err != nil {
 		return fmt.Errorf("Could not open discord session\n\t%s", err)
@@ -52,8 +49,6 @@ func (controller *DiscordController) Initialize(
 		return fmt.Errorf("Could not open discord session\n\t%s", err)
 	}
 
-	// The database controller must be initialized before the rest
-	controller.databaseController = databaseController
 	for _, initializer := range controllerInitializers {
 		initializer(controller)
 	}

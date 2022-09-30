@@ -1,14 +1,20 @@
 package database
 
 import (
+	"errors"
 	"fmt"
+	"html"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
+	"golang.org/x/exp/slices"
+	"gorm.io/datatypes"
+
+	"github.com/cardboard-citizens/cz-mission-api/internal/missions"
 	"github.com/cardboard-citizens/cz-mission-api/internal/models"
 	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
-	"golang.org/x/exp/slices"
 )
 
 func (controller *DatabaseController) CreateMission(
@@ -19,6 +25,9 @@ func (controller *DatabaseController) CreateMission(
 	mission.CloseAt = time.Now()
 	mission.CreatedAt = time.Now()
 	mission.UpdatedAt = time.Now()
+	mission.Category = controller.GetMissionClass(mission).Category
+	mission.Logo = controller.GetMissionClass(mission).Logo
+	mission.Parameters = datatypes.JSON([]byte(`{}`))
 	err = controller.DB.Create(mission).Error
 	if err != nil {
 		return fmt.Errorf("Could not store mission on database\n\t%s", err)
@@ -49,6 +58,7 @@ func (controller *DatabaseController) GetMissions(
 	limit int,
 	sort *string,
 	ascending bool,
+	filters map[string][]any,
 ) (missions []models.Mission) {
 	defaultSort := "updated_at"
 	if sort == nil {
@@ -69,21 +79,49 @@ func (controller *DatabaseController) GetMissions(
 	if !ascending {
 		sortKey = fmt.Sprintf("%s desc", *sort)
 	}
-	controller.DB.Limit(limit).
+	request := controller.DB.
 		Order(sortKey).
-		Where("canceled = ?", false).
-		Find(&missions)
+		Where("canceled = ?", false)
+
+	if limit > 0 {
+		request.Limit(limit)
+	}
+
+	for filter_key, filter_value := range filters {
+		request.Where(filter_key, filter_value...)
+	}
+
+	request.Find(&missions)
 	return missions
 }
 
-func (controller *DatabaseController) UpdateMission(mission *models.Mission, name, shortDescription, longDescription string, reward float64) (err error) {
+func (controller *DatabaseController) ValidateMission(mission *models.Mission, user *models.User) (paricipation *models.Participation, err error) {
+	missionClass := controller.GetMissionClass(mission)
+	validated, err := missionClass.Validation(mission, user)
+	if err != nil {
+		return nil, fmt.Errorf("Could not validate mission %s\n\t%s", mission.Format(), err)
+	}
+	if validated {
+		participation := &models.Participation{
+			Users:    []*models.User{user},
+			Mission:  *mission,
+			Progress: 1,
+		}
+		controller.CreateParicipation(participation)
+		return participation, err
+	}
+	return nil, err
+}
+
+func (controller *DatabaseController) UpdateMission(mission *models.Mission, name, shortDescription, longDescription string, reward float64, closeTime time.Time) (err error) {
 	mission.Name = name
 	mission.ShortDescription = shortDescription
 	mission.LongDescription = longDescription
 	mission.Reward = reward
+	mission.CloseAt = closeTime
 	mission.Initialized = true
 	mission.UpdatedAt = time.Now()
-	err = mission.Validate()
+	err = controller.CheckMission(mission)
 	if err != nil {
 		return fmt.Errorf("Could not update mission %s\n\t%s", mission.Format(), err)
 	}
@@ -94,7 +132,7 @@ func (controller *DatabaseController) UpdateMission(mission *models.Mission, nam
 func (controller *DatabaseController) CancelMission(mission *models.Mission) (err error) {
 	mission.Canceled = true
 	mission.UpdatedAt = time.Now()
-	err = mission.Validate()
+	err = controller.CheckMission(mission)
 	if err != nil {
 		return fmt.Errorf("Could not update mission %s\n\t%s", mission.Format(), err)
 	}
@@ -114,4 +152,31 @@ func GetMissionFieldNames() []string {
 	}
 
 	return fieldNames
+}
+
+func (controller *DatabaseController) GetMissionClass(mission *models.Mission) *missions.MissionClass {
+	return missions.GetMissionsClasses()[mission.Class]
+}
+
+func (controller *DatabaseController) CheckMission(mission *models.Mission) (err error) {
+	if mission.Name == "" {
+		return errors.New("Invalid mission: No name provided")
+	}
+	missionClassKeys := missions.GetMissionClassKeys()
+	if !slices.Contains(missionClassKeys, mission.Class) {
+		return fmt.Errorf(
+			"Invalid mission %s: Given class is not part of the available classes (%s)",
+			mission.Name,
+			mission.Class,
+		)
+	}
+
+	mission.Name = html.EscapeString(strings.TrimSpace(mission.Name))
+	mission.ShortDescription = html.EscapeString(
+		strings.TrimSpace(mission.ShortDescription),
+	)
+	mission.LongDescription = html.EscapeString(
+		strings.TrimSpace(mission.LongDescription),
+	)
+	return err
 }

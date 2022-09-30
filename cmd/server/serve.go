@@ -18,6 +18,7 @@ func serveCommand() *cobra.Command {
 				cmd.Flag("dbname").Value.String(),
 				cmd.Flag("discordbottoken").Value.String(),
 				cmd.Flag("discordguildid").Value.String(),
+				cmd.Flag("port").Value.String(),
 			)
 			if err != nil {
 				utils.Log.Error(err)

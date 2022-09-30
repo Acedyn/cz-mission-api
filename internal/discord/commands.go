@@ -101,7 +101,7 @@ func getCommands(controller *DiscordController) map[string]*DiscordCommand {
 				mission := models.Mission{
 					Class: options["class"].StringValue(),
 				}
-				err := controller.databaseController.CreateMission(&mission)
+				err := controller.DatabaseController.CreateMission(&mission)
 				if err != nil {
 					utils.Log.Error("An error occured while creating the mission", mission.Format(), "\n\t%s", err)
 					session.InteractionRespond(
@@ -165,10 +165,11 @@ func getCommands(controller *DiscordController) map[string]*DiscordCommand {
 				if ascendingOption, ok := options["ascending"]; ok {
 					ascending = ascendingOption.BoolValue()
 				}
-				missions := controller.databaseController.GetMissions(
+				missions := controller.DatabaseController.GetMissions(
 					limit,
 					sort,
-                    ascending,
+					ascending,
+					map[string][]any{},
 				)
 
 				if missions == nil || len(missions) == 0 {

@@ -1,10 +1,15 @@
 package missions
 
+import (
+	"github.com/cardboard-citizens/cz-mission-api/internal/models"
+)
+
 type MissionClass struct {
 	Category    string
 	Description string
-	Validation  func() bool
+	Validation  func(*models.Mission, *models.User) (bool, error)
 	Logo        string
+	Parameters  []string
 }
 
 func GetMissionsClasses() map[string]*MissionClass {

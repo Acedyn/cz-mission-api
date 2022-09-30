@@ -24,7 +24,7 @@ func MissionEmbed(mission *models.Mission) *discordgo.MessageEmbed {
 			},
 			{
 				Name:   "Category",
-				Value:  mission.GetClassData().Category,
+				Value:  mission.Category,
 				Inline: true,
 			},
 			{
@@ -44,7 +44,7 @@ func MissionEmbed(mission *models.Mission) *discordgo.MessageEmbed {
 			},
 		},
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
-			URL: mission.GetClassData().Logo,
+			URL: mission.Logo,
 		},
 		URL: "https://cardboardcitizen.com",
 		Footer: &discordgo.MessageEmbedFooter{

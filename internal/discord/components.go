@@ -27,7 +27,7 @@ func getButtons(controller *DiscordController) map[string]*DiscordButton {
 			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate, id string) {
 				utils.Log.Debug("Update mission", id, "component instruction received")
 
-				mission, err := controller.databaseController.GetMissionFromString(id)
+				mission, err := controller.DatabaseController.GetMissionFromString(id)
 				if err != nil {
 					utils.Log.Error("Could not handle mission update discord button\n\t", err)
 					return
@@ -61,13 +61,13 @@ func getButtons(controller *DiscordController) map[string]*DiscordButton {
 			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate, id string) {
 				utils.Log.Debug("Cancel mission", id, "component instruction received")
 
-				mission, err := controller.databaseController.GetMissionFromString(id)
+				mission, err := controller.DatabaseController.GetMissionFromString(id)
 				if err != nil {
 					utils.Log.Error("Could not handle mission cancel discord button\n\t", err)
 					return
 				}
 
-				err = controller.databaseController.CancelMission(mission)
+				err = controller.DatabaseController.CancelMission(mission)
 				if err != nil {
 					utils.Log.Error("Could not handle mission cancel discord button\n\t", err)
 					return

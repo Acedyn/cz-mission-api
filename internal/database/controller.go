@@ -37,7 +37,7 @@ func (controller *DatabaseController) Initialize() (err error) {
 }
 
 func (controller *DatabaseController) Migrate() (err error) {
-	err = controller.DB.Debug().AutoMigrate(models.Mission{})
+	err = controller.DB.Debug().AutoMigrate(models.Mission{}, models.User{}, models.Participation{})
 	if err != nil {
 		return fmt.Errorf(
 			"An error occured during the database migration\n\t%s",

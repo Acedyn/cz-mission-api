@@ -7,6 +7,7 @@ import (
 
 	"github.com/cardboard-citizens/cz-mission-api/internal/database"
 	"github.com/cardboard-citizens/cz-mission-api/internal/discord"
+	"github.com/cardboard-citizens/cz-mission-api/internal/rest"
 	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
 )
 
@@ -14,10 +15,11 @@ type Server struct {
 	initialized        bool
 	DatabaseController *database.DatabaseController
 	DiscordController  *discord.DiscordController
+	RestController     *rest.RestController
 }
 
 func (server *Server) Initialize(
-	dbDriver, dbName, discordToken, discordGuildId string,
+	dbDriver, dbName, discordToken, discordGuildId string, port string,
 ) (err error) {
 	server.DatabaseController = &database.DatabaseController{
 		DbDriver: dbDriver,
@@ -29,18 +31,20 @@ func (server *Server) Initialize(
 	}
 
 	server.DiscordController = &discord.DiscordController{
-		GuildId: discordGuildId,
+		GuildId:            discordGuildId,
+		DatabaseController: server.DatabaseController,
 	}
-	err = server.DiscordController.Initialize(
-		discordToken,
-		server.DatabaseController,
-	)
+	err = server.DiscordController.Initialize(discordToken)
 	if err != nil {
 		return fmt.Errorf("Could not Initialize discord connection\n\t%s", err)
 	}
-
+	server.RestController = &rest.RestController{
+		Port:               port,
+		DatabaseController: server.DatabaseController,
+	}
+	err = server.RestController.Initialize()
 	if err != nil {
-		return fmt.Errorf("Could not register discord commands\n\t%s", err)
+		return fmt.Errorf("Could not Initialize rest router\n\t%s", err)
 	}
 
 	server.initialized = true
@@ -54,6 +58,7 @@ func (server *Server) Run() (err error) {
 	}
 
 	server.DiscordController.Listen()
+	server.RestController.Listen()
 
 	stopSignal := make(chan os.Signal, 1)
 	signal.Notify(stopSignal, os.Interrupt)

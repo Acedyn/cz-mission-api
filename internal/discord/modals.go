@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/cardboard-citizens/cz-mission-api/internal/models"
@@ -11,59 +12,121 @@ import (
 )
 
 type DiscordModal struct {
-	Modal   []discordgo.MessageComponent
+	Modal   func(*models.Mission) []discordgo.MessageComponent
 	Handler func(*discordgo.Session, *discordgo.InteractionCreate, string)
 }
 
 func getModals(controller *DiscordController) map[string]*DiscordModal {
 	return map[string]*DiscordModal{
+		// "mission-parameters": {
+		// Modal: func(mission *models.Mission) []discordgo.MessageComponent {
+		// 	return []discordgo.MessageComponent{
+		// 		discordgo.ActionsRow{
+		// 			Components: []discordgo.MessageComponent{
+		// 				discordgo.TextInput{
+		// 					Label:       "Name",
+		// 					Style:       discordgo.TextInputShort,
+		// 					Placeholder: "Insert new name",
+		// 					CustomID:    "name",
+		// 					Value:       mission.Name,
+		// 				},
+		// 			},
+		// 		},
+		// 	}
+		// },
+		// Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate, id string) {
+		// 	utils.Log.Debug("Update mission parameters", id, "component button instruction received")
+
+		// 	mission, err := controller.DatabaseController.GetMissionFromString(id)
+		// 	if err != nil {
+		// 		utils.Log.Error("Could not handle mission update discord modal\n\t", err)
+		// 		session.InteractionRespond(
+		// 			interaction.Interaction,
+		// 			ErrorResponse(
+		// 				fmt.Sprintf(
+		// 					"An error occured when processing getting mission with id %s",
+		// 					id,
+		// 				),
+		// 				err),
+		// 		)
+		// 		return
+		// 	}
+
+		// 	data := interaction.ModalSubmitData()
+		// 	err = session.InteractionRespond(
+		// 		interaction.Interaction,
+		// 		UpdateMissionResponse(mission),
+		// 	)
+		// 	if err != nil {
+		// 		utils.Log.Error("An error occured while responding to the interaction", interaction.ID, "\n\t", err)
+		// 		return
+		// 	}
+		// },
+		// },
 		"update-mission": {
-			Modal: []discordgo.MessageComponent{
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.TextInput{
-							Label:       "Name",
-							Style:       discordgo.TextInputShort,
-							Placeholder: "Insert new name",
-							CustomID:    "name",
+			Modal: func(mission *models.Mission) []discordgo.MessageComponent {
+				return []discordgo.MessageComponent{
+					discordgo.ActionsRow{
+						Components: []discordgo.MessageComponent{
+							discordgo.TextInput{
+								Label:       "Name",
+								Style:       discordgo.TextInputShort,
+								Placeholder: "Insert new name",
+								CustomID:    "name",
+								Value:       mission.Name,
+							},
 						},
 					},
-				},
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.TextInput{
-							Label:       "Short Description",
-							Style:       discordgo.TextInputShort,
-							Placeholder: "Insert new short description",
-							CustomID:    "short-description",
+					discordgo.ActionsRow{
+						Components: []discordgo.MessageComponent{
+							discordgo.TextInput{
+								Label:       "Short Description",
+								Style:       discordgo.TextInputShort,
+								Placeholder: "Insert new short description",
+								CustomID:    "short-description",
+								Value:       mission.ShortDescription,
+							},
 						},
 					},
-				},
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.TextInput{
-							Label:       "Long Description",
-							Style:       discordgo.TextInputParagraph,
-							Placeholder: "Insert new long description",
-							CustomID:    "long-description",
+					discordgo.ActionsRow{
+						Components: []discordgo.MessageComponent{
+							discordgo.TextInput{
+								Label:       "Long Description",
+								Style:       discordgo.TextInputParagraph,
+								Placeholder: "Insert new long description",
+								CustomID:    "long-description",
+								Value:       mission.LongDescription,
+							},
 						},
 					},
-				},
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.TextInput{
-							Label:       "Reward",
-							Style:       discordgo.TextInputShort,
-							Placeholder: "Insert new reward",
-							CustomID:    "reward",
+					discordgo.ActionsRow{
+						Components: []discordgo.MessageComponent{
+							discordgo.TextInput{
+								Label:       "Reward",
+								Style:       discordgo.TextInputShort,
+								Placeholder: "Insert new reward",
+								CustomID:    "reward",
+								Value:       strconv.Itoa(int(mission.Reward)),
+							},
 						},
 					},
-				},
+					discordgo.ActionsRow{
+						Components: []discordgo.MessageComponent{
+							discordgo.TextInput{
+								Label:       "Close time",
+								Style:       discordgo.TextInputShort,
+								Placeholder: time.Now().Format(time.RFC822),
+								CustomID:    "close-time",
+								Value:       mission.CloseAt.Format(time.RFC822),
+							},
+						},
+					},
+				}
 			},
 			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate, id string) {
 				utils.Log.Debug("Update mission", id, "component button instruction received")
 
-				mission, err := controller.databaseController.GetMissionFromString(id)
+				mission, err := controller.DatabaseController.GetMissionFromString(id)
 				if err != nil {
 					utils.Log.Error("Could not handle mission update discord modal\n\t", err)
 					session.InteractionRespond(
@@ -92,8 +155,18 @@ func getModals(controller *DiscordController) map[string]*DiscordModal {
 					)
 					return
 				}
+				closeTimeRaw := data.Components[4].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
+				closeTime, err := time.Parse(time.RFC822, closeTimeRaw)
+				if err != nil {
+					utils.Log.Error("Could not handle mission update discord modal\n\t", err)
+					session.InteractionRespond(
+						interaction.Interaction,
+						MissionResponseError(mission, err),
+					)
+					return
+				}
 				created := !mission.Initialized
-				err = controller.databaseController.UpdateMission(mission, name, shortDescription, longDescription, float64(reward))
+				err = controller.DatabaseController.UpdateMission(mission, name, shortDescription, longDescription, float64(reward), closeTime)
 				if err != nil {
 					utils.Log.Error("Could not handle mission update discord modal\n\t", err)
 					session.InteractionRespond(
@@ -129,7 +202,7 @@ func getMissionModal(controller *DiscordController, mission *models.Mission) []d
 		utils.Log.Error("Could not get the mission component", idKey, ": Modal does not exists")
 		return []discordgo.MessageComponent{}
 	}
-	return modal.Modal
+	return modal.Modal(mission)
 }
 
 func init() {
