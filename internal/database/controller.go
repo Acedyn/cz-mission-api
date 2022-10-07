@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
@@ -25,7 +26,8 @@ func (controller *DatabaseController) Initialize() (err error) {
 		}
 		utils.Log.Info("Openned sqlite database connection on", dbFile)
 	} else if controller.DbDriver == "postgres" {
-		controller.DB, err = gorm.Open(sqlite.Open(fmt.Sprintf("%s.db", controller.DbName)), &gorm.Config{})
+		dsn := "host=192.168.1.43 port=49153 user=root dbname=citizens_mission sslmode=disable password=toor"
+		controller.DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 		if err != nil {
 			return fmt.Errorf("Could connect to postgres database\n\t%s", err)
 		}
@@ -37,7 +39,12 @@ func (controller *DatabaseController) Initialize() (err error) {
 }
 
 func (controller *DatabaseController) Migrate() (err error) {
-	err = controller.DB.Debug().AutoMigrate(models.Mission{}, models.User{}, models.Participation{})
+	err = controller.DB.Debug().AutoMigrate(
+
+		models.User{},
+		models.Mission{},
+		models.Participation{},
+	)
 	if err != nil {
 		return fmt.Errorf(
 			"An error occured during the database migration\n\t%s",

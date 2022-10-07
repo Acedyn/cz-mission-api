@@ -104,8 +104,8 @@ func (controller *DatabaseController) ValidateMission(mission *models.Mission, u
 	}
 	if validated {
 		participation := &models.Participation{
-			Users:    []*models.User{user},
-			Mission:  *mission,
+			Users: []*models.User{user},
+			//Mission:  *mission,
 			Progress: 1,
 		}
 		controller.CreateParicipation(participation)
