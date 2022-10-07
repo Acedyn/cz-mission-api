@@ -16,6 +16,40 @@ type DiscordButton struct {
 
 func getButtons(controller *DiscordController) map[string]*DiscordButton {
 	return map[string]*DiscordButton{
+		"set-mission-parameters": {
+			Button: discordgo.Button{
+				Emoji: discordgo.ComponentEmoji{
+					Name: "🔧",
+				},
+				Label: "Set Parameters",
+				Style: discordgo.PrimaryButton,
+			},
+			Handler: func(session *discordgo.Session, interaction *discordgo.InteractionCreate, id string) {
+				utils.Log.Debug("Update mission parameters", id, "component instruction received")
+
+				mission, err := controller.DatabaseController.GetMissionFromString(id)
+				if err != nil {
+					utils.Log.Error("Could not handle mission update discord button\n\t", err)
+					return
+				}
+
+				err = session.InteractionRespond(
+					interaction.Interaction,
+					MissionParametersModalResponse("Update Mission Parameters", controller, mission),
+				)
+
+				if err != nil {
+					utils.Log.Error(
+						fmt.Errorf(
+							"An error occured while responding to the interaction %s\n\t%s",
+							interaction.ID,
+							err,
+						),
+					)
+					return
+				}
+			},
+		},
 		"update-mission": {
 			Button: discordgo.Button{
 				Emoji: discordgo.ComponentEmoji{
@@ -100,7 +134,7 @@ func getMissionActionRow(
 	actionsRow := discordgo.ActionsRow{
 		Components: []discordgo.MessageComponent{},
 	}
-	for _, idKey := range []string{"update-mission", "cancel-mission"} {
+	for _, idKey := range []string{"set-mission-parameters", "update-mission", "cancel-mission"} {
 		button, ok := controller.Buttons[idKey]
 		if !ok {
 			utils.Log.Error(

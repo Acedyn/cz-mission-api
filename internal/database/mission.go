@@ -1,6 +1,7 @@
 package database
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html"
@@ -103,8 +104,8 @@ func (controller *DatabaseController) ValidateMission(mission *models.Mission, u
 	}
 	if validated {
 		participation := &models.Participation{
-			Users:    []*models.User{user},
-			Mission:  *mission,
+			Users: []*models.User{user},
+			//Mission:  *mission,
 			Progress: 1,
 		}
 		controller.CreateParicipation(participation)
@@ -114,12 +115,12 @@ func (controller *DatabaseController) ValidateMission(mission *models.Mission, u
 }
 
 func (controller *DatabaseController) UpdateMission(mission *models.Mission, name, shortDescription, longDescription string, reward float64, closeTime time.Time) (err error) {
+	mission.Initialized = true
 	mission.Name = name
 	mission.ShortDescription = shortDescription
 	mission.LongDescription = longDescription
 	mission.Reward = reward
 	mission.CloseAt = closeTime
-	mission.Initialized = true
 	mission.UpdatedAt = time.Now()
 	err = controller.CheckMission(mission)
 	if err != nil {
@@ -127,6 +128,23 @@ func (controller *DatabaseController) UpdateMission(mission *models.Mission, nam
 	}
 	controller.DB.Save(mission)
 	return err
+}
+
+func (controller *DatabaseController) UpdateMissionParameters(mission *models.Mission, parameters map[string]string) error {
+	encodedParameters, err := json.Marshal(parameters)
+	if err != nil {
+		return err
+	}
+
+	mission.Initialized = true
+	mission.Parameters = datatypes.JSON(encodedParameters)
+	mission.UpdatedAt = time.Now()
+	err = controller.CheckMission(mission)
+	if err != nil {
+		return fmt.Errorf("Could not update mission %s\n\t%s", mission.Format(), err)
+	}
+	controller.DB.Save(mission)
+	return nil
 }
 
 func (controller *DatabaseController) CancelMission(mission *models.Mission) (err error) {
