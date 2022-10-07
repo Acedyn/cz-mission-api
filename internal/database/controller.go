@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+    "os"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -26,8 +27,7 @@ func (controller *DatabaseController) Initialize() (err error) {
 		}
 		utils.Log.Info("Openned sqlite database connection on", dbFile)
 	} else if controller.DbDriver == "postgres" {
-		dsn := "host=192.168.1.43 port=49153 user=root dbname=citizens_mission sslmode=disable password=toor"
-		controller.DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		controller.DB, err = gorm.Open(postgres.Open(os.Getenv("DATABASE_URL")), &gorm.Config{})
 		if err != nil {
 			return fmt.Errorf("Could connect to postgres database\n\t%s", err)
 		}
