@@ -72,5 +72,4 @@ func (logger *Logger) Initialize() {
 func init() {
 	Log.Initialize()
 }
-
-var Log Logger = Logger{}
+var Log Logger = Logger{level: 0}

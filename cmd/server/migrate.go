@@ -1,9 +1,13 @@
 package main
 
 import (
+	"os"
+
+	"github.com/joho/godotenv"
+	"github.com/spf13/cobra"
+
 	"github.com/cardboard-citizens/cz-mission-api/internal/database"
 	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
-	"github.com/spf13/cobra"
 )
 
 func migrateCommand() *cobra.Command {
@@ -25,12 +29,13 @@ func migrateCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringP("dbname", "n", "cz-mission", "Name of the database")
+	command.Flags().StringP("dbname", "n", os.Getenv("DB_NAME"), "Name of the database")
 	command.Flags().
-		StringP("dbdriver", "d", "sqlite", "Driver that will be used to interact with the database (postgres, sqlite...)")
+		StringP("dbdriver", "d", os.Getenv("DB_DRIVER"), "Driver that will be used to interact with the database (postgres, sqlite...)")
 	return command
 }
 
 func init() {
+	godotenv.Load()
 	rootCmd.AddCommand(migrateCommand())
 }

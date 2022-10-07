@@ -1,9 +1,13 @@
 package main
 
 import (
+	"os"
+
+	"github.com/joho/godotenv"
+	"github.com/spf13/cobra"
+
 	"github.com/cardboard-citizens/cz-mission-api/internal/server"
 	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
-	"github.com/spf13/cobra"
 )
 
 func serveCommand() *cobra.Command {
@@ -32,19 +36,18 @@ func serveCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringP("port", "p", "8080", "HTTP port to listen to")
-	command.Flags().StringP("dbname", "n", "cz-mission", "Name of the database")
+	command.Flags().StringP("port", "p", os.Getenv("HTTP_PORT"), "HTTP port to listen to")
+	command.Flags().StringP("dbname", "n", os.Getenv("DB_NAME"), "Name of the database")
 	command.Flags().
-		StringP("dbdriver", "d", "sqlite", "Driver that will be used to interact with the database (postgres, sqlite...)")
+		StringP("dbdriver", "d", os.Getenv("DB_DRIVER"), "Driver that will be used to interact with the database (postgres, sqlite...)")
 	command.Flags().
-		StringP("discordbottoken", "b", "", "Private token to posess the bot")
+		StringP("discordbottoken", "b", os.Getenv("DISCORD_BOT_TOKEN"), "Private token to posess the bot")
 	command.Flags().
-		StringP("discordguildid", "g", "", "ID of the discord server")
-	command.MarkFlagRequired("bottoken")
-	command.MarkFlagRequired("guildid")
+		StringP("discordguildid", "g", os.Getenv("DISCORD_GUILD_ID"), "ID of the discord server")
 	return command
 }
 
 func init() {
+	godotenv.Load()
 	rootCmd.AddCommand(serveCommand())
 }

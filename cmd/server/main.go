@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
 
@@ -23,11 +24,16 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+    godotenv.Load()
 	rootCmd.PersistentFlags().
 		IntP("verbosity", "v", 20, "Verbosity level on a base of 10 (10 = DEBUG 50 = CRITICAL)")
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		utils.Log.Warning("Could not load env file \n\t%s", err)
+	}
 	if err := rootCmd.Execute(); err != nil {
 		utils.Log.Error(err)
 	}
