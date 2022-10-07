@@ -121,6 +121,21 @@ func MissionModalResponse(
 	}
 }
 
+func MissionParametersModalResponse(
+	title string,
+	controller *DiscordController,
+	mission *models.Mission,
+) *discordgo.InteractionResponse {
+	return &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseModal,
+		Data: &discordgo.InteractionResponseData{
+			CustomID:   fmt.Sprintf("%s:%d", "set-mission-parameters", mission.ID),
+			Title:      title,
+			Components: getMissionParameterModal(controller, mission),
+		},
+	}
+}
+
 func CreateMissionResponse(
 	controller *DiscordController,
 	mission *models.Mission,

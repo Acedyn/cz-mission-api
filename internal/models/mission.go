@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -30,4 +31,28 @@ type Mission struct {
 
 func (mission *Mission) Format() string {
 	return fmt.Sprintf("%s#%d", mission.Name, mission.ID)
+}
+
+func (mission *Mission) GetParsedParameters() (map[string]string, error) {
+	attributeMap := map[string]string{}
+	err := json.Unmarshal([]byte(mission.Parameters.String()), &attributeMap)
+	if err != nil {
+		err = fmt.Errorf("Could not parse mission's parameters\n\t%s", err)
+	}
+
+	return attributeMap, err
+}
+
+func (mission *Mission) GetParameterValue(key string) string {
+	attributeMap, err := mission.GetParsedParameters()
+	if err != nil {
+		return ""
+	}
+
+	value, ok := attributeMap[key]
+	if !ok {
+		return ""
+	}
+
+	return value
 }
