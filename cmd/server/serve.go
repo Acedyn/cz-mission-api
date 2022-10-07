@@ -36,7 +36,7 @@ func serveCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringP("port", "p", os.Getenv("HTTP_PORT"), "HTTP port to listen to")
+	command.Flags().StringP("port", "p", os.Getenv("PORT"), "HTTP port to listen to")
 	command.Flags().StringP("dbname", "n", os.Getenv("DB_NAME"), "Name of the database")
 	command.Flags().
 		StringP("dbdriver", "d", os.Getenv("DB_DRIVER"), "Driver that will be used to interact with the database (postgres, sqlite...)")
