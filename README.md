@@ -4,7 +4,7 @@ This api is meant to be used for the cardboard citizens goddboard app. This API 
 
 ## Admin API
 
-The creation of missions is done via a discord bot. You can join the (the dev server)[https://discord.gg/pcXzubhZXD] to create missions. The bot will expose two commands
+The creation of missions is done via a discord bot. You can join the [the dev server](https://discord.gg/pcXzubhZXD) to create missions. The bot will expose two commands
 
 - /create-mission
 - /get-missions
