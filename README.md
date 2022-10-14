@@ -14,11 +14,11 @@ Each missions will be modifiable and cancelable via the post's components
 ## Rest API
 
 The available missions can be queried via the rest API
-- cz-mission-api.herokuapp.com/missions/opened will return the available missions
-- cz-mission-api.herokuapp.com/missions/closed will return the closed missions
-- cz-mission-api.herokuapp.com/missions/{id}/validate?user={userid} will check if the user completed the mission and grant him reward if so
-- cz-mission-api.herokuapp.com/user/{id} will return the data relative to the user
-- cz-mission-api.herokuapp.com/user/{id}/participations will return the completed missions by this user
+- ``cz-mission-api.herokuapp.com/missions/opened`` will return the available missions
+- ``cz-mission-api.herokuapp.com/missions/closed`` will return the closed missions
+- ``cz-mission-api.herokuapp.com/missions/{id}/validate?user={userid}`` will check if the user completed the mission and grant him reward if so
+- ``cz-mission-api.herokuapp.com/user/{id}`` will return the data relative to the user
+- ``cz-mission-api.herokuapp.com/user/{id}/participations`` will return the completed missions by this user
 
 ## Caution
 
