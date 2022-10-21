@@ -5,6 +5,7 @@ import (
 	"github.com/cardboard-citizens/cz-mission-api/internal/database"
 	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"net/http"
 )
 
@@ -29,7 +30,13 @@ func (controller *RestController) Initialize() (err error) {
 }
 
 func (controller *RestController) Listen() (err error) {
-	err = http.ListenAndServe(fmt.Sprintf(":%s", controller.Port), controller.Router)
+	corsConfig := cors.New(cors.Options{
+		AllowedMethods:   []string{"POST", "PUT", "GET"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+		Debug:            true,
+	})
+	err = http.ListenAndServe(fmt.Sprintf(":%s", controller.Port), corsConfig.Handler(controller.Router))
 	utils.Log.Info("REST server started on port", controller.Port)
 	return err
 }
