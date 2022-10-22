@@ -27,6 +27,16 @@ func getUserRoutes(controller *RestController) map[string]http.HandlerFunc {
 			participations := controller.DatabaseController.GetUserParticipations(user)
 			SuccessResponse(w, participations, make([]error, 0))
 		},
+		"leaderboard": func(w http.ResponseWriter, r *http.Request) {
+			points_key := "points"
+			users := controller.DatabaseController.GetUsers(
+				10,
+				&points_key,
+				true,
+				map[string][]any{},
+			)
+			SuccessResponse(w, users, make([]error, 0))
+		},
 	}
 }
 

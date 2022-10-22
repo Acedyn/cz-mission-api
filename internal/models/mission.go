@@ -24,7 +24,6 @@ type Mission struct {
 	Initialized      bool           `gorm:"default:false"              json:"initialized"`
 	CloseAt          time.Time      `                                  json:"close_at"`
 	Parameters       datatypes.JSON `                             json:"parameters"`
-	Participation    Participation  `gorm:"foreignKey:ID" json:"participation"`
 	CreatedAt        time.Time      `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt        time.Time      `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 }

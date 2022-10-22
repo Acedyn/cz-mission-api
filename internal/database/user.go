@@ -3,8 +3,12 @@ package database
 import (
 	"fmt"
 	"strconv"
+	"time"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/cardboard-citizens/cz-mission-api/internal/models"
+	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
 )
 
 func (controller *DatabaseController) CreateUser(
@@ -50,4 +54,42 @@ func (controller *DatabaseController) GetOrCreateUserFromString(id string) (*mod
 		}
 	}
 	return user, nil
+}
+
+func (controller *DatabaseController) GetUsers(
+	limit int,
+	sort *string,
+	ascending bool,
+	filters map[string][]any,
+) (users []models.User) {
+	defaultSort := "updated_at"
+	if sort == nil {
+		sort = &defaultSort
+	}
+
+	sortKey := fmt.Sprintf("%s", *sort)
+	if !ascending {
+		sortKey = fmt.Sprintf("%s desc", *sort)
+	}
+	request := controller.DB.
+		Order(sortKey).
+		Where("canceled = ?", false)
+
+	if limit > 0 {
+		request.Limit(limit)
+	}
+
+	for filter_key, filter_value := range filters {
+		request.Where(filter_key, filter_value...)
+	}
+
+	request.Find(&users)
+	return users
+}
+
+func (controller *DatabaseController) UpdateUser(user *models.User, points float64) (err error) {
+	user.Points = points
+	user.UpdatedAt = time.Now()
+	controller.DB.Save(user)
+	return err
 }
