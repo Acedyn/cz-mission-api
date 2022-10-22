@@ -12,20 +12,21 @@ import (
 type Mission struct {
 	gorm.Model
 
-	ID               uint32         `gorm:"primary_key"                json:"id"`
-	Name             string         `gorm:"size:100"                   json:"name"`
-	ShortDescription string         `gorm:"size:255"                   json:"short_description"`
-	LongDescription  string         `gorm:"size:255"                   json:"long_description"`
-	Category         string         `gorm:"size:255"                   json:"category"`
-	Logo             string         `gorm:"size:255"                   json:"logo"`
-	Class            string         `gorm:"size:100"                   json:"class"`
-	Reward           float64        `gorm:"default:0"                  json:"reward"`
-	Canceled         bool           `gorm:"default:false"              json:"canceled"`
-	Initialized      bool           `gorm:"default:false"              json:"initialized"`
-	CloseAt          time.Time      `                                  json:"close_at"`
-	Parameters       datatypes.JSON `                             json:"parameters"`
-	CreatedAt        time.Time      `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt        time.Time      `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
+	ID               uint32           `gorm:"primary_key"                json:"id"`
+	Name             string           `gorm:"size:100"                   json:"name"`
+	ShortDescription string           `gorm:"size:255"                   json:"short_description"`
+	LongDescription  string           `gorm:"size:255"                   json:"long_description"`
+	Category         string           `gorm:"size:255"                   json:"category"`
+	Logo             string           `gorm:"size:255"                   json:"logo"`
+	Class            string           `gorm:"size:100"                   json:"class"`
+	Reward           float64          `gorm:"default:0"                  json:"reward"`
+	Canceled         bool             `gorm:"default:false"              json:"canceled"`
+	Initialized      bool             `gorm:"default:false"              json:"initialized"`
+	CloseAt          time.Time        `                                  json:"close_at"`
+	Parameters       datatypes.JSON   `                             json:"parameters"`
+	// Participation    []*Participation `gorm:"foreignKey:ID" json:"participation"`
+	CreatedAt        time.Time        `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt        time.Time        `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
 
 func (mission *Mission) Format() string {

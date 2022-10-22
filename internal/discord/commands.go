@@ -173,11 +173,7 @@ func getCommands(controller *DiscordController) map[string]*DiscordCommand {
 				)
 
 				if missions == nil || len(missions) == 0 {
-					err := fmt.Errorf(
-						"Database returned 0 matched with the options \nLimit: %d\nSort: %s",
-						limit,
-						*sort,
-					)
+					err := fmt.Errorf("Database returned 0 matches")
 					utils.Log.Error("An error occured while responding to the interaction", interaction.ID, "\n\t", err)
 					session.InteractionRespond(
 						interaction.Interaction,
