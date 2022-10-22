@@ -72,7 +72,7 @@ func getMissionRoutes(controller *RestController) map[string]http.HandlerFunc {
 			for _, mission := range missions {
 				match := false
 				for _, participation := range participations {
-					if participation.Mission.ID == mission.ID {
+					if participation.Mission == mission.ID {
 						match = true
 						break
 					}
@@ -104,7 +104,7 @@ func getMissionRoutes(controller *RestController) map[string]http.HandlerFunc {
 			for _, mission := range missions {
 				match := false
 				for _, participation := range participations {
-					if participation.Mission.ID == mission.ID {
+					if participation.Mission == mission.ID {
 						match = true
 						break
 					}

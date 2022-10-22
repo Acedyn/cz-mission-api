@@ -105,11 +105,11 @@ func (controller *DatabaseController) ValidateMission(mission *models.Mission, u
 	if validated {
 		participation := &models.Participation{
 			Users:    []*models.User{user},
-			Mission:  *mission,
+			Mission:  mission.ID,
 			Progress: 1,
 		}
 		controller.CreateParicipation(participation)
-        controller.UpdateUser(user, user.Points + mission.Reward)
+		controller.UpdateUser(user, user.Points+mission.Reward)
 		return participation, err
 	}
 	return nil, err
