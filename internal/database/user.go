@@ -5,10 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"golang.org/x/exp/slices"
-
 	"github.com/cardboard-citizens/cz-mission-api/internal/models"
-	"github.com/cardboard-citizens/cz-mission-api/internal/utils"
 )
 
 func (controller *DatabaseController) CreateUser(
