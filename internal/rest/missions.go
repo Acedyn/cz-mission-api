@@ -19,7 +19,7 @@ func getMissionRoutes(controller *RestController) map[string]http.HandlerFunc {
 				return
 			}
 			mission, err := controller.DatabaseController.GetMissionFromString(id)
-			if err != nil {
+			if err != nil || mission == nil {
 				CustomResponse(w, "Could not get mission", []error{}, http.StatusNotFound)
 				return
 			}
