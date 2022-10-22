@@ -8,6 +8,16 @@ import (
 
 func getUserRoutes(controller *RestController) map[string]http.HandlerFunc {
 	return map[string]http.HandlerFunc{
+		"leaderboard/users": func(w http.ResponseWriter, r *http.Request) {
+			points_key := "points"
+			users := controller.DatabaseController.GetUsers(
+				10,
+				&points_key,
+				true,
+				map[string][]any{},
+			)
+			SuccessResponse(w, users, make([]error, 0))
+		},
 		"/{id}": func(w http.ResponseWriter, r *http.Request) {
 			id := mux.Vars(r)["id"]
 			user, err := controller.DatabaseController.GetOrCreateUserFromString(id)
@@ -26,16 +36,6 @@ func getUserRoutes(controller *RestController) map[string]http.HandlerFunc {
 			}
 			participations := controller.DatabaseController.GetUserParticipations(user)
 			SuccessResponse(w, participations, make([]error, 0))
-		},
-		"leaderboard": func(w http.ResponseWriter, r *http.Request) {
-			points_key := "points"
-			users := controller.DatabaseController.GetUsers(
-				10,
-				&points_key,
-				true,
-				map[string][]any{},
-			)
-			SuccessResponse(w, users, make([]error, 0))
 		},
 	}
 }
