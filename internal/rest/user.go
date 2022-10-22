@@ -8,7 +8,7 @@ import (
 
 func getUserRoutes(controller *RestController) map[string]http.HandlerFunc {
 	return map[string]http.HandlerFunc{
-		"leaderboard/users": func(w http.ResponseWriter, r *http.Request) {
+		"/leaderboard": func(w http.ResponseWriter, r *http.Request) {
 			points_key := "points"
 			users := controller.DatabaseController.GetUsers(
 				10,
