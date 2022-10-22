@@ -68,9 +68,7 @@ func (controller *DatabaseController) GetUsers(
 	if !ascending {
 		sortKey = fmt.Sprintf("%s desc", *sort)
 	}
-	request := controller.DB.
-		Order(sortKey).
-		Where("canceled = ?", false)
+	request := controller.DB.Order(sortKey)
 
 	if limit > 0 {
 		request.Limit(limit)

@@ -18,7 +18,7 @@ func getUserRoutes(controller *RestController) map[string]http.HandlerFunc {
 			)
 			SuccessResponse(w, users, make([]error, 0))
 		},
-		"/{id}": func(w http.ResponseWriter, r *http.Request) {
+		"/{id}/user": func(w http.ResponseWriter, r *http.Request) {
 			id := mux.Vars(r)["id"]
 			user, err := controller.DatabaseController.GetOrCreateUserFromString(id)
 			if err != nil {
