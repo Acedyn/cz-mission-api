@@ -82,7 +82,7 @@ func getMissionRoutes(controller *RestController) map[string]http.HandlerFunc {
 					filteredMissions = append(filteredMissions, mission)
 				}
 			}
-			SuccessResponse(w, missions, make([]error, 0))
+			SuccessResponse(w, filteredMissions, make([]error, 0))
 		},
 		"/completed": func(w http.ResponseWriter, r *http.Request) {
 			user, err := controller.DatabaseController.GetOrCreateUserFromString(r.URL.Query().Get("user"))
@@ -114,7 +114,7 @@ func getMissionRoutes(controller *RestController) map[string]http.HandlerFunc {
 					filteredMissions = append(filteredMissions, mission)
 				}
 			}
-			SuccessResponse(w, missions, make([]error, 0))
+			SuccessResponse(w, filteredMissions, make([]error, 0))
 		},
 	}
 }
