@@ -13,7 +13,7 @@ func getUserRoutes(controller *RestController) map[string]http.HandlerFunc {
 			users := controller.DatabaseController.GetUsers(
 				10,
 				&points_key,
-				true,
+				false,
 				map[string][]any{},
 			)
 			SuccessResponse(w, users, make([]error, 0))
