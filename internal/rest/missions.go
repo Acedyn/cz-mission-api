@@ -65,7 +65,7 @@ func getMissionRoutes(controller *RestController) map[string]http.HandlerFunc {
 				0,
 				&update_key,
 				true,
-				map[string][]any{"close_at < ?": {time.Now()}},
+				map[string][]any{"close_at > ?": {time.Now()}},
 			)
 
 			filteredMissions := []models.Mission{}
